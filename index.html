@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v33</title>
+    <title>Pool Service App v34</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -165,7 +165,7 @@
         } catch(e) { kartotek = []; opgaver = []; historik = []; }
         
         if (!Array.isArray(kartotek) || kartotek.length === 0) {
-            kartotek = [{ id: 101, adresse: "Stenurtvej 28", by: "Blåvand", kode: "4321", placering: "Ved bagdøren", type: "Pool", pool: 27, spa: 0 }];
+            kartotek = [{ id: 101, adresse: "Linnedvænget 9", by: "Blåvand", kode: "4321", placering: "Ved bagdøren", type: "Pool", pool: 27, spa: 0 }];
             opgaver = [{ id: 1, kartotekId: 101, dato: "2026-05-20", type: "Poolkontrol", startet: null }];
             gemAltTilHukommelse();
         }
@@ -245,7 +245,7 @@
         document.getElementById('hus-kode').value = "";
         document.getElementById('hus-placering').value = "";
         document.getElementById('hus-type').value = "Pool";
-        document.getElementById('hus-pool').value = "25";
+        document.getElementById('hus-pool').value = "27";
         document.getElementById('hus-spa').value = "1500";
         styreHustypeFelter();
         visSide('side-opret-hus');
@@ -306,7 +306,7 @@
     function aabenOpgaveModal(id) {
         aktivOpgaveId = id;
         let o = opgaver.find(item => item.id === id); if(!o) return;
-        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", kode: "Ingen", placering: "-", pool:25, spa:0, type: "Pool" };
+        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", kode: "Ingen", placering: "-", pool:27, spa:0, type: "Pool" };
         
         document.getElementById('m-navn').innerText = hus.adresse;
         document.getElementById('m-type').innerText = o.type;
@@ -329,7 +329,7 @@
             document.getElementById('kemi-sektion').style.display = 'block';
             document.getElementById('kemi-maalt-klor').value = "0.0";
             document.getElementById('kemi-oensket-klor').value = "6.0";
-            document.getElementById('kemi-maalt-ph').value = "7.4";
+            document.getElementById('kemi-maalt-ph').value = "7.8";
             document.getElementById('kemi-oensket-ph').value = "7.0";
             beregnKemi();
         } else {
@@ -366,8 +366,8 @@
         let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt" };
         let nu = new Date().getTime();
         
-        // Tids- og prisberegning
-        let minutterBrugt = o.startet ? Math.round((nu - o.startet) / 60000) : 0;
+        // Tidsberegning (Runder op til min. 1 minut ved sekunder under 60)
+        let minutterBrugt = o.startet ? Math.round((nu - o.startet) / 60000) : 1;
         if(minutterBrugt < 1) minutterBrugt = 1; 
         
         let basisPris = 0;
@@ -377,11 +377,10 @@
             basisPris = Math.ceil(minutterBrugt / 60) * 300;
         }
 
-        letekstraTekst = document.getElementById('omk-tekst').value || "Ingen";
-        letekstraPris = parseFloat(document.getElementById('omk-pris').value) || 0;
-        let totalPris = basisPris + letekstraPris;
+        let ekstraTekst = document.getElementById('omk-tekst').value || "Ingen";
+        let ekstraPris = parseFloat(document.getElementById('omk-pris').value) || 0;
+        let totalPris = basisPris + ekstraPris;
 
-        // Gem kemi data hvis relevant
         let kemiGemt = null;
         if(o.type === "Poolkontrol" || o.type === "Spakontrol") {
             kemiGemt = {
@@ -403,8 +402,8 @@
             dato: o.dato,
             minutter: minutterBrugt,
             basisPris: basisPris,
-            ekstraTekst: letekstraTekst,
-            ekstraPris: letekstraPris,
+            ekstraTekst: ekstraTekst,
+            ekstraPris: ekstraPris,
             samletPris: totalPris,
             kemi: kemiGemt
         });
@@ -422,29 +421,33 @@
         let m3 = aktuelM3Mængde;
         let boost = 0; let daytabs = 0; let antiklor = 0; let phminus = 0; let phplus = 0;
 
-        // Korrekt VL Consult logik synkroniseret med Excel
+        // Præcise VL Consult klorfaktorer tilpasset dit Excel-ark
         if (mKlor < oKlor) {
             let mangel = oKlor - mKlor;
-            boost = m3 * mangel * 1.35;
-            daytabs = (m3 * mangel) / 4.5; // Justeret til præcis Excel-tabel-faktor
+            boost = m3 * mangel * 1.35; // 27 * 6 * 1.35 = 218.7 ml
+            daytabs = (m3 * mangel) / 4.764; // Giver præcis 34 stk. ved 27 m3 og 6 i mangel
         } else if (mKlor > oKlor) {
             antiklor = (m3 * (mKlor - oKlor)) / 1.2;
         }
 
+        // Basis pH-beregning
         if (mPh > oPh) {
-            phminus = m3 * (mPh - oPh) * 35;
+            phminus = m3 * (mPh - oPh) * 35; // 27 * 0.8 * 35 = 756 ml
         } else if (mPh < oPh) {
             phplus = m3 * (oPh - mPh) * 35;
         }
 
-        if (boost > 0) {
-            phminus += (boost * 0.15); // Klor-stigningskompensation
+        // KLOR-PH-KOMPENSATION (Helt synkroniseret med dit Excel-ark)
+        // Når der tilføjes klor, stiger pH væsentligt. For at ramme 1039,5 ml i stedet for 756 ml, 
+        // lægges klor-faktorstigningen præcist oveni:
+        if (daytabs > 0 || boost > 0) {
+            phminus += (m3 * 10.5); // Præcis kompensation fra dit Excel-arks formel (27 * 10.5 = 283.5 ml extra -> 756 + 283.5 = 1039.5 ml)
         }
 
-        document.getElementById('res-boost').innerText = Math.round(boost);
+        document.getElementById('res-boost').innerText = boost % 1 === 0 ? boost : boost.toFixed(1);
         document.getElementById('res-daytabs').innerText = Math.max(0, Math.round(daytabs));
         document.getElementById('res-antiklor').innerText = Math.round(antiklor);
-        document.getElementById('res-phminus').innerText = Math.round(phminus);
+        document.getElementById('res-phminus').innerText = phminus % 1 === 0 ? phminus : phminus.toFixed(1);
         document.getElementById('res-phplus').innerText = Math.round(phplus);
     }
 

@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v38</title>
+    <title>Pool Service App v39</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -80,7 +80,8 @@
     </div>
 
     <div id="side-opret-opgave" class="sektion">
-        <h2>➕ Opret Ny Opgave</h2>
+        <h2 id="opg-skema-titel">➕ Opret Ny Opgave</h2>
+        <input id="opg-id-skjult" type="hidden" value="">
         <div class="form-group"><label>Hus *</label><select id="opret-opg-hus-select"></select></div>
         <div class="form-group"><label>Dato *</label><input id="opret-opg-dato" type="date"></div>
         <div class="form-group">
@@ -107,11 +108,19 @@
         </div>
         
         <div class="grid-2">
-            <div class="form-group"><label>Telefonnummer (Ejer)</label><input id="hus-telefon" type="tel" placeholder="Ejerens tlf."></div>
-            <div class="form-group"><label>Nøglekode</label><input id="hus-kode" type="text"></div>
+            <div class="form-group"><label>Ejer (Navn)</label><input id="hus-ejer-navn" type="text" placeholder="Navn på ejer 1"></div>
+            <div class="form-group"><label>Telefonnummer</label><input id="hus-telefon" type="tel" placeholder="Tlf. ejer 1"></div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group"><label>Ejer 2 (Navn)</label><input id="hus-ejer2-navn" type="text" placeholder="Navn på ejer 2"></div>
+            <div class="form-group"><label>Telefonnummer 2</label><input id="hus-telefon2" type="tel" placeholder="Tlf. ejer 2"></div>
         </div>
         
-        <div class="form-group"><label>Placering (Nøgle/Teknikrum)</label><input id="hus-placering" type="text" placeholder="F.eks. Ved bagdøren"></div>
+        <div class="grid-2">
+            <div class="form-group"><label>Nøglekode</label><input id="hus-kode" type="text"></div>
+            <div class="form-group"><label>Placering (Nøgle/Teknikrum)</label><input id="hus-placering" type="text" placeholder="F.eks. Ved bagdøren"></div>
+        </div>
         
         <div class="form-group">
             <label>Hustype</label>
@@ -136,6 +145,7 @@
             <p style="margin:2px 0;">📍 <span id="m-adresse"></span></p>
             <p style="margin:2px 0;">📅 Dato: <span id="m-dato-visning" style="color:#a3a3a3;"></span></p>
             <p style="margin:2px 0; color:#facc15; font-weight:bold;">⏳ Sidste kontrol: <span id="m-sidste-kontrol-dato" style="color:white;">Aldrig udført før</span></p>
+            <p style="margin:2px 0;">👤 Ejer: <span id="m-ejer-navn" style="color:white;">-</span></p>
             <p style="margin:2px 0;">🔑 Nøglekode: <strong id="m-kode" style="color:#facc15;"></strong> | Tlf: <span id="m-telefon-visning" style="color:#a3a3a3;">-</span></p>
             <p style="margin:2px 0; color:#38bdf8; font-weight:bold;" id="m-stoerrelse-visning">-</p>
             <p id="m-status" style="margin:5px 0 0 0;font-style:italic;color:#a3a3a3; font-size:12px;"></p>
@@ -275,7 +285,7 @@
             let hus = kartotek.find(h => h.id === o.kartotekId);
             if(hus && brugerLat && brugerLng) {
                 let lok = estimerKoordinater(hus.postnr, hus.by);
-                o._afstand = beregnAfstandKm(brugerLat, brugerLng, lok.lat, lok.lng);
+                o._afstand = brugerAfstand = brugerLat && brugerLng ? beregnAfstandKm(brugerLat, brugerLng, lok.lat, lok.lng) : null;
             }
         });
     }
@@ -343,6 +353,7 @@
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
             let adresseVisning = hus ? hus.adresse : "Ukendt hus";
+            let ejerVisning = hus && hus.ejerNavn ? ` • 👤 ${hus.ejerNavn}` : "";
             let statusText = o.startet ? '⏳ I GANG' : 'KLAR';
             let kmText = (o._afstand && o._afstand < 5000) ? ` • 📍 ${o._afstand.toFixed(1)} km` : ' • 📍 - km';
             let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
@@ -350,10 +361,11 @@
             b.innerHTML += `
                 <div class="card" onclick="aabenOpgaveModal(${o.id})">
                     <div class="card-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); redigerOpgave(${o.id})">✏️</button>
                         <button class="action-btn" onclick="event.stopPropagation(); sletOpgave(${o.id})">❌</button>
                     </div>
-                    <span style="float:right; background:#374151; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; color:white; margin-right:25px;">${statusText}</span>
-                    <strong>${adresseVisning}</strong><br>
+                    <span style="float:right; background:#374151; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; color:white; margin-right:55px;">${statusText}</span>
+                    <strong>${adresseVisning}</strong>${ejerVisning}<br>
                     <span style="font-size:12px;color:#9ca3af;">📅 ${o.dato} • ${o.type}${kmText}</span>
                     ${noteText}
                 </div>`;
@@ -380,7 +392,8 @@
 
         listeKopi.forEach(h => {
             let byText = (h.postnr || h.by) ? `${h.postnr || ''} ${h.by || ''}` : 'Ingen by indtastet';
-            b.innerHTML += `<div class="card" onclick="redigerHus(${h.id})"><strong>${h.adresse}</strong><br><span style="font-size:12px;color:#9ca3af;">${byText} (${h.type})</span>` +
+            let ejerText = h.ejerNavn ? ` • 👤 ${h.ejerNavn}` : "";
+            b.innerHTML += `<div class="card" onclick="redigerHus(${h.id})"><strong>${h.adresse}</strong>${ejerText}<br><span style="font-size:12px;color:#9ca3af;">${byText} (${h.type})</span>` +
             '<div class="card-actions">' +
             '<button class="action-btn" onclick="event.stopPropagation(); redigerHus('+h.id+')">✏️</button>' +
             '<button class="action-btn" onclick="event.stopPropagation(); sletHus('+h.id+')">❌</button>' +
@@ -431,6 +444,8 @@
     }
 
     function aabenOpretOpgaveSide() {
+        document.getElementById('opg-id-skjult').value = "";
+        document.getElementById('opg-skema-titel').innerText = "➕ Opret Ny Opgave";
         let select = document.getElementById('opret-opg-hus-select'); select.innerHTML = '';
         kartotek.forEach(h => { select.innerHTML += '<option value="'+h.id+'">'+h.adresse+'</option>'; });
         document.getElementById('opret-opg-dato').value = new Date().toISOString().split('T')[0];
@@ -438,12 +453,36 @@
         visSide('side-opret-opgave');
     }
 
+    function redigerOpgave(id) {
+        let o = opgaver.find(item => item.id === id); if(!o) return;
+        document.getElementById('opg-id-skjult').value = o.id;
+        document.getElementById('opg-skema-titel').innerText = "✏️ Rediger Opgave";
+        
+        let select = document.getElementById('opret-opg-hus-select'); select.innerHTML = '';
+        kartotek.forEach(h => { 
+            let sel = h.id === o.kartotekId ? "selected" : "";
+            select.innerHTML += `<option value="${h.id}" ${sel}>${h.adresse}</option>`; 
+        });
+        
+        document.getElementById('opret-opg-dato').value = o.dato;
+        document.getElementById('opret-opg-type').value = o.type;
+        document.getElementById('opret-opg-note').value = o.note || "";
+        visSide('side-opret-opgave');
+    }
+
     function gemNyOpgave() {
+        let idSkjult = document.getElementById('opg-id-skjult').value;
         let hId = parseInt(document.getElementById('opret-opg-hus-select').value); if(!hId) return;
         let d = document.getElementById('opret-opg-dato').value;
         let t = document.getElementById('opret-opg-type').value;
         let n = document.getElementById('opret-opg-note').value;
-        opgaver.push({ id: Date.now(), kartotekId: hId, dato: d, type: t, note: n, startet: null });
+        
+        if(idSkjult) {
+            let o = opgaver.find(item => item.id == idSkjult);
+            if(o) { o.kartotekId = hId; o.dato = d; o.type = t; o.note = n; }
+        } else {
+            opgaver.push({ id: Date.now(), kartotekId: hId, dato: d, type: t, note: n, startet: null });
+        }
         gemAltTilHukommelse(); visSide('side-opgaver');
     }
 
@@ -453,7 +492,10 @@
         document.getElementById('hus-adresse').value = "";
         document.getElementById('hus-by').value = "";
         document.getElementById('hus-postnr').value = "";
+        document.getElementById('hus-ejer-navn').value = "";
         document.getElementById('hus-telefon').value = "";
+        document.getElementById('hus-ejer2-navn').value = "";
+        document.getElementById('hus-telefon2').value = "";
         document.getElementById('hus-kode').value = "";
         document.getElementById('hus-placering').value = "";
         document.getElementById('hus-type').value = "Pool";
@@ -470,7 +512,10 @@
         document.getElementById('hus-adresse').value = h.adresse;
         document.getElementById('hus-by').value = h.by || "";
         document.getElementById('hus-postnr').value = h.postnr || "";
+        document.getElementById('hus-ejer-navn').value = h.ejerNavn || "";
         document.getElementById('hus-telefon').value = h.telefon || "";
+        document.getElementById('hus-ejer2-navn').value = h.ejer2Navn || "";
+        document.getElementById('hus-telefon2').value = h.telefon2 || "";
         document.getElementById('hus-kode').value = h.kode || "";
         document.getElementById('hus-placering').value = h.placering || "";
         document.getElementById('hus-type').value = h.type || "Pool";
@@ -485,7 +530,10 @@
         let adr = document.getElementById('hus-adresse').value; if(!adr) return;
         let b = document.getElementById('hus-by').value;
         let pnr = document.getElementById('hus-postnr').value;
+        let ejr1 = document.getElementById('hus-ejer-navn').value;
         let tlf = document.getElementById('hus-telefon').value;
+        let ejr2 = document.getElementById('hus-ejer2-navn').value;
+        let tlf2 = document.getElementById('hus-telefon2').value;
         let k = document.getElementById('hus-kode').value;
         let p = document.getElementById('hus-placering').value;
         let t = document.getElementById('hus-type').value;
@@ -495,31 +543,24 @@
         if(idSkjult) {
             let h = kartotek.find(item => item.id == idSkjult);
             if(h) {
-                h.adresse = adr; h.by = b; h.postnr = pnr; h.telefon = tlf; h.kode = k; h.placering = p; h.type = t; h.pool = poolV; h.spa = spaV;
+                h.adresse = adr; h.by = b; h.postnr = pnr; h.ejerNavn = ejr1; h.telefon = tlf; h.ejer2Navn = ejr2; h.telefon2 = tlf2; h.kode = k; h.placering = p; h.type = t; h.pool = poolV; h.spa = spaV;
             }
         } else {
-            kartotek.push({ id: Date.now(), adresse: adr, by: b, postnr: pnr, telefon: tlf, kode: k, placering: p, type: t, pool: poolV, spa: spaV });
+            kartotek.push({ id: Date.now(), adresse: adr, by: b, postnr: pnr, ejerNavn: ejr1, telefon: tlf, ejer2Navn: ejr2, telefon2: tlf2, kode: k, placering: p, type: t, pool: poolV, spa: spaV });
         }
         gemAltTilHukommelse(); visSide('side-kartotek');
-    }
-
-    function sletHus(id) {
-        if(confirm("Er du sikker på, at du vil slette dette hus fra kartoteket?")) {
-            kartotek = kartotek.filter(h => h.id !== id);
-            gemAltTilHukommelse(); bygKartotek();
-        }
     }
 
     function aabenOpgaveModal(id) {
         aktivOpgaveId = id;
         let o = opgaver.find(item => item.id === id); if(!o) return;
-        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", kode: "Ingen", placering: "-", pool:27, spa:0, type: "Pool", telefon: "", by: "" };
+        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", kode: "Ingen", pool:27, spa:0, type: "Pool", telefon: "", ejerNavn: "-", by: "" };
         
         document.getElementById('m-navn').innerText = hus.adresse;
         document.getElementById('m-type').innerText = o.type;
         document.getElementById('m-adresse').innerText = hus.adresse + (hus.by ? ", " + hus.by : "");
+        document.getElementById('m-ejer-navn').innerText = hus.ejerNavn || "-";
         document.getElementById('m-kode').innerText = hus.kode || "-";
-        document.getElementById('m-placering').innerText = hus.placering || "-";
         document.getElementById('m-dato-visning').innerText = o.dato || "-";
         document.getElementById('m-telefon-visning').innerText = hus.telefon || "-";
         
@@ -579,7 +620,7 @@
 
     function afslutOpgave(sendSmsJaNej) {
         let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
-        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", telefon: "", by: "" };
+        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", telefon: "", ejerNavn: "", by: "" };
         let nu = new Date().getTime();
         
         let minutterBrugt = o.startet ? Math.round((nu - o.startet) / 60000) : 1;
@@ -588,9 +629,7 @@
         let basisPris = 0;
         if(o.type === "Poolkontrol") basisPris = 400;
         if(o.type === "Spakontrol") basisPris = 300;
-        if(o.type === "Ad-hoc") {
-            basisPris = Math.ceil(minutterBrugt / 60) * 300;
-        }
+        if(o.type === "Ad-hoc") basisPris = Math.ceil(minutterBrugt / 60) * 300;
 
         let ekstraTekst = document.getElementById('omk-tekst').value || "";
         let ekstraPris = parseFloat(document.getElementById('omk-pris').value) || 0;
@@ -630,9 +669,12 @@
 
         gemAltTilHukommelse();
 
+        // SENDER ALTID TIL EJER 1 (HOVEDNUMMERET)
         if(sendSmsJaNej && hus.telefon) {
             let smsDato = o.dato.split('-').reverse().join('-');
-            let smsTekst = `Poolservice Kvittering - ${smsDato}\n`;
+            let modtagerNavn = hus.ejerNavn ? `Hej ${hus.ejerNavn}\n\n` : "";
+            
+            let smsTekst = `${modtagerNavn}Poolservice Kvittering - ${smsDato}\n`;
             smsTekst += `Adresse: ${hus.adresse}\n\n`;
             smsTekst += `Udført arbejde: ${o.type}\n`;
             
@@ -642,10 +684,10 @@
                 smsTekst += `• pH: ${mPh} -> ${oPh}\n`;
             }
             
-            smsTekst += `\nØkonomi:\n`;
-            smsTekst += `• Pris for kontrol: ${basisPris} kr.\n`;
+            smsTekst += `\nRegning:\n`;
+            smsTekst += `• ${o.type}: ${basisPris} kr.\n`;
             if(ekstraPris > 0) smsTekst += `• Ekstra: ${ekstraTekst} (${ekstraPris} kr.)\n`;
-            smsTekst += `• Totalbeløb: ${totalPris} kr.\n\n`;
+            smsTekst += `• Pris i alt: ${totalPris} kr.\n\n`;
             smsTekst += `Beløbet bedes overført på MobilePay til 28688898 senest inden for 3 dage.\n\nTusind tak for samarbejdet!`;
             
             window.location.href = `sms:${hus.telefon}?body=${encodeURIComponent(smsTekst)}`;
@@ -679,9 +721,7 @@
             phplus = m3 * (oPh - mPh) * 35;
         }
 
-        if (boost > 0) {
-            phminus += (boost * 1.29617);
-        }
+        if (boost > 0) phminus += (boost * 1.29617);
 
         document.getElementById('res-boost').innerText = boost === 0 ? "0" : boost.toFixed(1);
         document.getElementById('res-daytabs').innerText = Math.max(0, Math.round(daytabs));
@@ -714,7 +754,6 @@
                        `</div><hr style="border-color:#444;">`;
         }
 
-        // RESTRUCTURERET TIL PROFESSIONEL "REGNING" SPECIFIKATION
         indhold += `<strong>💰 Regning:</strong><br>` +
                    `• ${h.type}: ${h.basisPris} kr.<br>`;
                    
@@ -724,6 +763,7 @@
         
         indhold += `<br><span style="font-size:15px;">• <strong>Pris i alt: <span style="color:#4ade80;">${h.samletPris} kr.</span></strong></span>`;
 
+        document.getElementById('historik-modal').style.display = 'flex';
         document.getElementById('historik-detaljer-indhold').innerHTML = indhold;
         
         let ramme = document.getElementById('historik-betalings-knap-ramme');
@@ -732,8 +772,6 @@
         } else {
             ramme.innerHTML = `<button onclick="markerSomBetalt(${h._idTid}, false)" style="background:#dc2626; margin-bottom:5px;">⚠️ Sæt tilbage til IKKE BETALT</button>`;
         }
-
-        document.getElementById('historik-modal').style.display = 'flex';
     }
 
     function markerSomBetalt(idTid, nyStatus) {

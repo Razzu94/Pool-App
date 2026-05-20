@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v29 - 100% FUNKTIONEL</title>
+    <title>Pool Service App v30</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -25,8 +25,8 @@
         .btn-slet { background: #dc2626; }
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; padding: 15px; z-index: 100; }
         .modal-content { background: #1e1e1e; border: 1px solid #444; width: 100%; max-width: 350px; border-radius: 10px; padding: 20px; text-align: left; }
-        .info-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
-        .kemi-resultat { background: #111827; border-left: 4px solid #facc15; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 14px; line-height: 1.5; }
+        .info-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; line-height: 1.5; }
+        .kemi-resultat { background: #111827; border-left: 4px solid #2563eb; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 14px; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -97,229 +97,23 @@
     <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
         <h3 id="m-navn" style="margin:0 0 5px 0;color:white;">Adresse</h3>
         <p id="m-type" style="margin:0 0 15px 0;color:#60a5fa;font-weight:bold;"></p>
+        
         <div class="info-box">
-            <p style="margin:5px 0;">📍 <span id="m-adresse"></span></p>
-            <p style="margin:5px 0;">🔑 Nøglekode: <strong id="m-kode" style="color:#facc15;"></strong> | Placering: <span id="m-placering" style="color:#a3a3a3;"></span></p>
-            <p id="m-status" style="margin:5px 0 0 0;font-style:italic;color:#a3a3a3;"></p>
+            <p style="margin:2px 0;">📍 <span id="m-adresse"></span></p>
+            <p style="margin:2px 0;">🔑 Nøglekode: <strong id="m-kode" style="color:#facc15;"></strong> | Placering: <span id="m-placering" style="color:#a3a3a3;"></span></p>
+            <p style="margin:2px 0; color:#38bdf8; font-weight:bold;" id="m-stoerrelse-visning">Størrelse: -</p>
+            <p id="m-status" style="margin:5px 0 0 0;font-style:italic;color:#a3a3a3; font-size:12px;"></p>
         </div>
         
-        <div id="kemi-sektion" style="display:none; background:rgba(37, 99, 235, 0.1); border: 1px solid #2563eb; padding:12px; border-radius:8px; margin-bottom:15px;">
-            <h4 style="margin:0 0 5px 0; color:#60a5fa; font-size:14px;">🧪 Officiel VL Consult Beregner</h4>
+        <div id="kemi-sektion" style="display:none; margin-bottom:15px;">
             <div class="grid-2">
-                <div class="form-group"><label>Pool / Spa str.</label><input id="kemi-m3-input" type="number" step="0.1" oninput="beregnKemi()"></div>
+                <div class="form-group"><label>Målt klor (mg/l)</label><input id="kemi-maalt-klor" type="number" step="0.1" value="0.0" oninput="beregnKemi()"></div>
                 <div class="form-group"><label>Ønsket klor</label><input id="kemi-oensket-klor" type="number" step="0.1" value="6.0" oninput="beregnKemi()"></div>
             </div>
             <div class="grid-2">
-                <div class="form-group"><label>Målt klor (mg/l)</label><input id="kemi-maalt-klor" type="number" step="0.1" value="0.0" oninput="beregnKemi()"></div>
                 <div class="form-group"><label>Målt pH</label><input id="kemi-maalt-ph" type="number" step="0.1" value="7.4" oninput="beregnKemi()"></div>
+                <div class="form-group"><label>Ønsket pH</label><input id="kemi-oensket-ph" type="number" step="0.1" value="7.0" oninput="beregnKemi()"></div>
             </div>
+            
             <div class="kemi-resultat">
-                <strong>Dosering ifølge tabeller:</strong><br>
-                🚀 Klor Boost: <span id="res-boost" style="color: #60a5fa; font-weight: bold;">0</span> ml.<br>
-                📉 Antiklor: <span id="res-antiklor" style="color: #ef4444; font-weight: bold;">0</span> ml.<br>
-                ➖ pH-Minus: <span id="res-phminus" style="color: #facc15; font-weight: bold;">0</span> ml.
-            </div>
-        </div>
-
-        <button onclick="aabenKortNavigation()" id="btn-maps" class="btn-maps">🗺️ Start Navigation</button>
-        <button id="btn-start" onclick="startTimer()" class="btn-start">▶ Start Opgave</button>
-        <button id="btn-afslut" onclick="afslutOpgave()" class="btn-afslut" style="display:none;">🏁 Afslut & Gem</button>
-        <button onclick="lukOpgaveModal()" class="btn-annuller">Luk vindue</button>
-    </div>
-</div>
-
-<script>
-    let kartotek = []; let opgaver = []; let historik = []; let aktivOpgaveId = null;
-
-    function initialiserData() {
-        try {
-            kartotek = JSON.parse(localStorage.getItem('pool_kartotek')) || [];
-            opgaver = JSON.parse(localStorage.getItem('pool_opgaver')) || [];
-            historik = JSON.parse(localStorage.getItem('pool_historik')) || [];
-        } catch(e) { kartotek = []; opgaver = []; historik = []; }
-        
-        if (!Array.isArray(kartotek) || kartotek.length === 0) {
-            kartotek = [{ id: 101, adresse: "Stenurtvej 28", by: "Blåvand", kode: "4321", placering: "Ved bagdøren", type: "Pool", pool: 23, spa: 0 }];
-            opgaver = [{ id: 1, kartotekId: 101, dato: "2026-05-20", type: "Poolkontrol", startet: null }];
-            gemAltTilHukommelse();
-        }
-    }
-
-    function gemAltTilHukommelse() {
-        localStorage.setItem('pool_kartotek', JSON.stringify(kartotek));
-        localStorage.setItem('pool_opgaver', JSON.stringify(opgaver));
-        localStorage.setItem('pool_historik', JSON.stringify(historik));
-    }
-
-    function styreHustypeFelter() {
-        let type = document.getElementById('hus-type').value;
-        document.getElementById('felt-pool').style.display = (type === 'Pool') ? 'block' : 'none';
-        document.getElementById('felt-spa').style.display = (type === 'Spa') ? 'block' : 'none';
-    }
-
-    function visSide(sideId) {
-        document.getElementById('side-opgaver').style.display = 'none';
-        document.getElementById('side-kartotek').style.display = 'none';
-        document.getElementById('side-historik').style.display = 'none';
-        document.getElementById('side-opret-opgave').style.display = 'none';
-        document.getElementById('side-opret-hus').style.display = 'none';
-        
-        let aktivSide = document.getElementById(sideId);
-        if(aktivSide) aktivSide.style.display = 'block';
-        
-        document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-        if(sideId === 'side-opgaver') { document.getElementById('btn-nav-opg').classList.add('active'); bygOpgaveliste(); }
-        if(sideId === 'side-kartotek') { document.getElementById('btn-nav-kar').classList.add('active'); bygKartotek(); }
-        if(sideId === 'side-historik') { document.getElementById('btn-nav-his').classList.add('active'); bygHistorik(); }
-    }
-
-    function bygOpgaveliste() {
-        let b = document.getElementById('liste-beholder'); b.innerHTML = '';
-        if(opgaver.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Ingen aktive opgaver.</p>'; return; }
-        opgaver.forEach(o => {
-            let hus = kartotek.find(h => h.id === o.kartotekId);
-            let adresseVisning = hus ? hus.adresse : "Ukendt hus";
-            let status = o.startet ? '⏳ I GANG' : 'KLAR';
-            b.innerHTML += '<div class="card" onclick="aabenOpgaveModal('+o.id+')"><span style="float:right; background:#4b5563; padding:2px 6px; border-radius:4px; font-size:11px;">'+status+'</span><strong>'+adresseVisning+'</strong><br><span style="font-size:12px;color:#9ca3af;">'+o.type+'</span></div>';
-        });
-    }
-
-    function bygKartotek() {
-        let b = document.getElementById('kartotek-beholder'); b.innerHTML = '';
-        if(kartotek.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Kartoteket er tomt.</p>'; return; }
-        kartotek.forEach(h => {
-            b.innerHTML += '<div class="card"><strong>'+h.adresse+'</strong><br><span style="font-size:12px;color:#9ca3af;">'+h.by+' ('+h.type+')</span></div>';
-        });
-    }
-
-    function bygHistorik() {
-        let b = document.getElementById('historik-beholder'); b.innerHTML = '';
-        if(historik.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Ingen udførte opgaver endnu.</p>'; return; }
-        historik.forEach(h => {
-            b.innerHTML += '<div class="card"><strong>'+h.adresse+'</strong><br><span style="font-size:12px;color:#16a34a;">✔️ '+h.type+'</span></div>';
-        });
-    }
-
-    function aabenOpretOpgaveSide() {
-        let select = document.getElementById('opret-opg-hus-select'); select.innerHTML = '';
-        kartotek.forEach(h => { select.innerHTML += '<option value="'+h.id+'">'+h.adresse+'</option>'; });
-        
-        let iDato = document.getElementById('opret-opg-dato');
-        if(iDato) { iDato.value = new Date().toISOString().split('T')[0]; }
-        visSide('side-opret-opgave');
-    }
-
-    function gemNyOpgave() {
-        let hId = parseInt(document.getElementById('opret-opg-hus-select').value);
-        let d = document.getElementById('opret-opg-dato').value;
-        let t = document.getElementById('opret-opg-type').value;
-        opgaver.push({ id: Date.now(), kartotekId: hId, dato: d, type: t, startet: null });
-        gemAltTilHukommelse(); visSide('side-opgaver');
-    }
-
-    function gemNytHus() {
-        let adr = document.getElementById('hus-adresse').value; if(!adr) return;
-        let b = document.getElementById('hus-by').value;
-        let k = document.getElementById('hus-kode').value;
-        let p = document.getElementById('hus-placering').value;
-        let t = document.getElementById('hus-type').value;
-        let poolV = parseFloat(document.getElementById('hus-pool').value) || 0;
-        let spaV = parseFloat(document.getElementById('hus-spa').value) || 0;
-        
-        kartotek.push({ id: Date.now(), adresse: adr, by: b, kode: k, placering: p, type: t, pool: poolV, spa: spaV });
-        gemAltTilHukommelse(); visSide('side-kartotek');
-    }
-
-    function aabenOpgaveModal(id) {
-        aktivOpgaveId = id;
-        let o = opgaver.find(item => item.id === id); if(!o) return;
-        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", kode: "Ingen", placering: "-", pool:25, spa:0, type:"Pool" };
-        
-        document.getElementById('m-navn').innerText = hus.adresse;
-        document.getElementById('m-type').innerText = o.type;
-        document.getElementById('m-adresse').innerText = hus.adresse;
-        document.getElementById('m-kode').innerText = hus.kode || "-";
-        document.getElementById('m-placering').innerText = hus.placering || "-";
-        
-        if(o.type === "Poolkontrol" || o.type === "Spakontrol") {
-            document.getElementById('kemi-sektion').style.display = 'block';
-            document.getElementById('kemi-m3-input').value = (o.type === "Spakontrol") ? (hus.spa || 1500) : (hus.pool || 25);
-            beregnKemi();
-        } else {
-            document.getElementById('kemi-sektion').style.display = 'none';
-        }
-
-        if(o.startet) {
-            document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('btn-afslut').style.display = 'block';
-            document.getElementById('m-status').innerText = "Status: I gang";
-        } else {
-            document.getElementById('btn-start').style.display = 'block';
-            document.getElementById('btn-afslut').style.display = 'none';
-            document.getElementById('m-status').innerText = "Status: Klar";
-        }
-        document.getElementById('opgave-modal').style.display = 'flex';
-    }
-
-    function lukOpgaveModal() {
-        document.getElementById('opgave-modal').style.display = 'none';
-        bygOpgaveliste();
-    }
-
-    function startTimer() {
-        let o = opgaver.find(item => item.id === aktivOpgaveId);
-        if(o) o.startet = new Date().getTime();
-        gemAltTilHukommelse(); aabenOpgaveModal(aktivOpgaveId);
-    }
-
-    function afslutOpgave() {
-        let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
-        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt" };
-        historik.push({ adresse: hus.adresse, type: o.type });
-        opgaver = opgaver.filter(item => item.id !== aktivOpgaveId);
-        gemAltTilHukommelse(); lukOpgaveModal(); visSide('side-historik');
-    }
-
-    function beregnKemi() {
-        let o = opgaver.find(item => item.id === aktivOpgaveId);
-        let inputVol = parseFloat(document.getElementById('kemi-m3-input').value) || 0;
-        let mKlor = parseFloat(document.getElementById('kemi-maalt-klor').value) || 0;
-        let oKlor = parseFloat(document.getElementById('kemi-oensket-klor').value) || 0;
-        let mPh = parseFloat(document.getElementById('kemi-maalt-ph').value) || 7.0;
-
-        let m3 = (o && o.type === "Spakontrol" && inputVol > 100) ? (inputVol / 1000) : inputVol;
-
-        let boost = 0; let antiklor = 0; let phminus = 0;
-
-        if (mKlor < oKlor) {
-            boost = m3 * (oKlor - mKlor) * 1.35;
-        } else if (mKlor > oKlor) {
-            antiklor = (m3 * (mKlor - oKlor)) / 1.2;
-        }
-
-        if (mPh > 7.0) {
-            phminus = m3 * (mPh - 7.0) * 35;
-        }
-
-        if (boost > 0) {
-            phminus += (boost * 0.15);
-        }
-
-        document.getElementById('res-boost').innerText = Math.round(boost);
-        document.getElementById('res-antiklor').innerText = Math.round(antiklor);
-        document.getElementById('res-phminus').innerText = Math.round(phminus);
-    }
-
-    function aabenKortNavigation() {
-        let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
-        let hus = kartotek.find(h => h.id === o.kartotekId);
-        if(hus) window.open("http://maps.google.com/?q=" + encodeURIComponent(hus.adresse), '_blank');
-    }
-
-    function haardNulstilApp() { localStorage.clear(); initialiserData(); visSide('side-opgaver'); }
-
-    initialiserData();
-    visSide('side-opgaver');
-</script>
-</body>
-</html>
+                <strong>Dosering

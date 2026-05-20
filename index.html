@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v43</title>
+    <title>Pool Service App v44</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -200,7 +200,7 @@
             </div>
 
             <div class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:15px;">
-                <label style="color:#4ade80; font-weight:bold;">📸 Tilføj fotodokumentation (Kamera eller galleri)</label>
+                <label style="color:#4ade80; font-weight:bold;">📸 Tilføj fotodokumentation</label>
                 <input type="file" id="m-foto-input" accept="image/*" onchange="haandterFotoValg()">
                 <img id="m-foto-preview" class="img-preview" style="display:none;" src="">
             </div>
@@ -288,12 +288,18 @@
     }
     function startGpsOvervaagning() {
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                brugerLat = pos.coords.latitude; brugerLng = pos.coords.longitude; bygOpgaveliste();
+            navigator.geolocation.watchPosition(pos => {
+                brugerLat = pos.coords.latitude; brugerLng = pos.coords.longitude; 
+                if(document.getElementById('side-opgaver').style.display === 'block') { bygOpgaveliste(); }
             }, null, {enableHighAccuracy: true});
         }
     }
-    function estimerKoordinater(postnr) { return {lat: 54.7675, lng: 11.8739}; }
+    function estimerKoordinater(postnr) { 
+        let p = parseInt(postnr);
+        if (p === 4873) return {lat: 54.6983, lng: 11.9272};
+        if (p === 4800) return {lat: 54.7675, lng: 11.8739};
+        return {lat: 54.7675, lng: 11.8739}; 
+    }
     function beregnAfstandKm(lat1, lon1, lat2, lon2) {
         if (!lat1 || !lon1 || !lat2 || !lon2) return null;
         let R = 6371; let dLat = (lat2-lat1) * Math.PI / 180; let dLon = (lon2-lon1) * Math.PI / 180;
@@ -331,17 +337,25 @@
         let listeKopi = [...opgaver];
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
-            if(hus && brugerLat && brugerLng) {
+            if(hus) {
                 let lok = estimerKoordinater(hus.postnr);
-                o._afstand = beregnAfstandKm(brugerLat, brugerLng, lok.lat, lok.lng);
-            }
+                o._afstand = (brugerLat && brugerLng) ? beregnAfstandKm(brugerLat, brugerLng, lok.lat, lok.lng) : null;
+            } else { o._afstand = null; }
         });
+
+        if(opgaveSortering === 'dato-asc') { listeKopi.sort((x,y) => new Date(x.dato) - new Date(y.dato)); }
+        else if(opgaveSortering === 'dato-desc') { listeKopi.sort((x,y) => new Date(y.dato) - new Date(x.dato)); }
+        else if(opgaveSortering === 'afstand') { listeKopi.sort((x,y) => (x._afstand || 9999) - (y._afstand || 9999)); }
+
+        document.querySelectorAll('#side-opgaver .sort-btn').forEach(btn => btn.classList.remove('active'));
+        let aktBtn = document.getElementById('sort-opg-' + opgaveSortering); if(aktBtn) aktBtn.classList.add('active');
 
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
             let adresseVisning = hus ? hus.adresse : "Ukendt hus";
             let statusText = o.startet ? '⏳ I GANG' : 'KLAR';
             let labelTypeStr = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel || ''}` : o.type;
+            let afstStr = (o._afstand !== null && o._afstand !== undefined) ? `📍 ${o._afstand.toFixed(1)} km` : `📍 -- km`;
             let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
             
             b.innerHTML += `
@@ -352,7 +366,7 @@
                     </div>
                     <span style="float:right; background:#374151; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; color:white; margin-right:55px;">${statusText}</span>
                     <strong>${adresseVisning}</strong><br>
-                    <span style="font-size:12px;color:#9ca3af;">📅 ${o.dato} • ${labelTypeStr}</span>
+                    <span style="font-size:12px;color:#9ca3af;">📅 ${o.dato} • ${labelTypeStr} • ${afstStr}</span>
                     ${noteText}
                 </div>`;
         });
@@ -360,9 +374,16 @@
 
     function bygKartotek() {
         let b = document.getElementById('kartotek-beholder'); b.innerHTML = '';
-        kartotek.forEach(h => {
+        let listeKopi = [...kartotek];
+        if(kartotekSortering === 'az') { listeKopi.sort((x,y) => x.adresse.localeCompare(y.adresse)); }
+        else { listeKopi.sort((x,y) => y.adresse.localeCompare(x.adresse)); }
+
+        document.querySelectorAll('#side-kartotek .sort-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('sort-kar-' + kartotekSortering).classList.add('active');
+
+        listeKopi.forEach(h => {
             let fListe = []; if(h.hasPool) fListe.push("Pool"); if(h.hasSpa) fListe.push("Spa");
-            let fTekst = fListe.length > 0 ? fListe.join(" + ") : "Ingen faciliteter markeret";
+            let fTekst = fListe.length > 0 ? fListe.join(" + ") : "Ingen faciliteter";
             b.innerHTML += `
                 <div class="card" onclick="redigerHus(${h.id})">
                     <div class="card-actions">
@@ -371,6 +392,32 @@
                     </div>
                     <strong>${h.adresse}</strong> • 👤 ${h.ejerNavn || '-'}<br>
                     <span style="font-size:12px;color:#9ca3af;">${h.postnr || ''} ${h.by || ''} (${fTekst})</span>
+                </div>`;
+        });
+    }
+
+    function bygHistorik() {
+        let b = document.getElementById('historik-beholder'); b.innerHTML = '';
+        if(historik.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Historikken er tom.</p>'; return; }
+        
+        let listeKopi = [...historik];
+        if(historikSortering === 'nyest') { listeKopi.sort((x,y) => y._idTid - x._idTid); }
+        else if(historikSortering === 'aeldst') { listeKopi.sort((x,y) => x._idTid - y._idTid); }
+        else if(historikSortering === 'az') { listeKopi.sort((x,y) => x.adresse.localeCompare(y.adresse)); }
+
+        document.querySelectorAll('#side-historik .sort-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('sort-his-' + historikSortering).classList.add('active');
+
+        listeKopi.forEach(h => {
+            let bKlasse = h.betalt ? 'status-betalt' : 'status-ej-betalt';
+            let bTekst = h.betalt ? 'BETALT' : 'IKKE BETALT';
+            let tLabel = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel || ''}` : h.type;
+            
+            b.innerHTML += `
+                <div class="card" onclick="visHistorikDetaljer(${h._idTid})">
+                    <span class="badge-status ${bKlasse}">${bTekst}</span>
+                    <strong>${h.adresse}</strong><br>
+                    <span style="font-size:12px;color:#9ca3af;">📅 ${h.dato || '-'} • ${tLabel} • <strong>${h.samletPris} kr.</strong></span>
                 </div>`;
         });
     }
@@ -387,12 +434,43 @@
         haandterHusValgIOpgave(); visSide('side-opret-opgave');
     }
 
+    function redigerOpgave(id) {
+        let o = opgaver.find(item => item.id === id); if(!o) return;
+        document.getElementById('opg-id-skjult').value = o.id;
+        document.getElementById('opg-skema-titel').innerText = "✏️ Rediger Opgave";
+        
+        let select = document.getElementById('opret-opg-hus-select'); select.innerHTML = '';
+        kartotek.forEach(h => {
+            let sel = h.id === o.kartotekId ? "selected" : "";
+            select.innerHTML += `<option value="${h.id}" ${sel}>${h.adresse}</option>`;
+        });
+        
+        document.getElementById('opret-opg-dato').value = o.dato;
+        document.getElementById('opret-opg-note').value = o.note || "";
+        
+        haandterHusValgIOpgave();
+        document.getElementById('opret-opg-type').value = o.type;
+        styreOpgaveTypeFelter();
+
+        if(o.type === "Ad-hoc") {
+            document.getElementById('opret-opg-titel').value = o.titel || "";
+            if(o.prisForm === "fast") {
+                document.getElementById('pris-type-fast').checked = true;
+                document.getElementById('opret-opg-fastpris-kroner').value = o.fastPris || "";
+            } else {
+                document.getElementById('pris-type-time').checked = true;
+            }
+            styreFastPrisFelt();
+        }
+        visSide('side-opret-opgave');
+    }
+
     function haandterHusValgIOpgave() {
         let hId = parseInt(document.getElementById('opret-opg-hus-select').value); if(!hId) return;
         let hus = kartotek.find(h => h.id === hId); if(!hus) return;
         let typeSelect = document.getElementById('opret-opg-type'); typeSelect.innerHTML = '';
         
-        if(hus.hasPool) typeSelect.innerHTML += '<option value="Poolkontrol">Poolkontrol (400 kr.)</option>';
+        if(hus.hasPool || hus.hasPool === undefined) typeSelect.innerHTML += '<option value="Poolkontrol">Poolkontrol (400 kr.)</option>';
         if(hus.hasSpa) typeSelect.innerHTML += '<option value="Spakontrol">Spakontrol (300 kr.)</option>';
         typeSelect.innerHTML += '<option value="Ad-hoc">Ad-hoc opgave</option>';
         styreOpgaveTypeFelter();
@@ -431,6 +509,32 @@
         gemAltTilHukommelse(); visSide('side-opgaver');
     }
 
+    function gemNytHus() {
+        let idSkjult = document.getElementById('hus-id-skjult').value;
+        let adr = document.getElementById('hus-adresse').value; if(!adr) return;
+        
+        let pB = document.getElementById('hus-has-pool').checked;
+        let sB = document.getElementById('hus-has-spa').checked;
+
+        let dataObj = {
+            adresse: adr, by: document.getElementById('hus-by').value, postnr: document.getElementById('hus-postnr').value,
+            ejerNavn: document.getElementById('hus-ejer-navn').value, telefon: document.getElementById('hus-telefon').value,
+            ejer2Navn: document.getElementById('hus-ejer2-navn').value, telefon2: document.getElementById('hus-telefon2').value,
+            kode: document.getElementById('hus-kode').value, placering: document.getElementById('hus-placering').value,
+            note: document.getElementById('hus-note').value, hasPool: pB, hasSpa: sB,
+            pool: parseFloat(document.getElementById('hus-pool').value) || 0,
+            spa: parseFloat(document.getElementById('hus-spa2') ? document.getElementById('hus-spa2').value : document.getElementById('hus-spa').value) || 0
+        };
+
+        if(idSkjult) {
+            let h = kartotek.find(item => item.id == idSkjult);
+            if(h) Object.assign(h, dataObj);
+        } else {
+            dataObj.id = Date.now(); kartotek.push(dataObj);
+        }
+        gemAltTilHukommelse(); visSide('side-kartotek');
+    }
+
     function aabenOpretHusSide() {
         document.getElementById('hus-id-skjult').value = "";
         document.getElementById('hus-skema-titel').innerText = "🏠 Tilføj Hus til Kartotek";
@@ -458,30 +562,11 @@
         styreHusStaerrelseFelter(); visSide('side-opret-hus');
     }
 
-    function gemNytHus() {
-        let idSkjult = document.getElementById('hus-id-skjult').value;
-        let adr = document.getElementById('hus-adresse').value; if(!adr) return;
-        
-        let pB = document.getElementById('hus-has-pool').checked;
-        let sB = document.getElementById('hus-has-spa').checked;
-
-        let dataObj = {
-            adresse: adr, by: document.getElementById('hus-by').value, postnr: document.getElementById('hus-postnr').value,
-            ejerNavn: document.getElementById('hus-ejer-navn').value, telefon: document.getElementById('hus-telefon').value,
-            ejer2Navn: document.getElementById('hus-ejer2-navn').value, telefon2: document.getElementById('hus-telefon2').value,
-            kode: document.getElementById('hus-kode').value, placering: document.getElementById('hus-placering').value,
-            note: document.getElementById('hus-note').value, hasPool: pB, hasSpa: sB,
-            pool: parseFloat(document.getElementById('hus-pool').value) || 0,
-            spa: parseFloat(document.getElementById('hus-spa').value) || 0
-        };
-
-        if(idSkjult) {
-            let h = kartotek.find(item => item.id == idSkjult);
-            if(h) Object.assign(h, dataObj);
-        } else {
-            dataObj.id = Date.now(); kartotek.push(dataObj);
+    function sletHus(id) {
+        if(confirm("Er du sikker på, at du vil slette denne kunde/hus fra kartoteket?")) {
+            kartotek = kartotek.filter(h => h.id !== id);
+            gemAltTilHukommelse(); bygKartotek();
         }
-        gemAltTilHukommelse(); visSide('side-kartotek');
     }
 
     function aabenOpgaveModal(id) {
@@ -517,7 +602,8 @@
             document.getElementById('m-stoerrelse-visning').innerText = "Pool: " + (hus.pool || 27) + " m³";
             aktuelM3Mængde = hus.pool || 27;
         } else {
-            document.getElementById('m-stoerrelse-visning').innerText = "Ad-hoc type afregning";
+            let pBeskrivelse = o.prisForm === "fast" ? `Fast pris: ${o.fastPris} kr.` : "Timepris (300 kr./t)";
+            document.getElementById('m-stoerrelse-visning').innerText = pBeskrivelse;
         }
         
         if(o.type === "Poolkontrol" || o.type === "Spakontrol") {
@@ -666,14 +752,44 @@
         let h = historik.find(item => item._idTid === idTid);
         if(h) { h.betalt = nyStatus; gemAltTilHukommelse(); document.getElementById('historik-modal').style.display = 'none'; bygHistorik(); }
     }
+    
+    function beregnKemi() {
+        let mk = parseFloat(document.getElementById('kemi-maalt-klor').value) || 0;
+        let ok = parseFloat(document.getElementById('kemi-oensket-klor').value) || 0;
+        let mp = parseFloat(document.getElementById('kemi-maalt-ph').value) || 0;
+        let op = parseFloat(document.getElementById('kemi-oensket-ph').value) || 0;
+        
+        let diffKlor = ok - mk;
+        let daytabs = 0; let boost = 0; let antiklor = 0;
+        
+        if (diffKlor > 0) {
+            daytabs = Math.round((diffKlor * aktuelM3Mængde) / 2.5);
+            boost = Math.round(diffKlor * aktuelM3Mængde * 15);
+        } else if (diffKlor < 0) {
+            antiklor = Math.round(Math.abs(diffKlor) * aktuelM3Mængde * 12);
+        }
+        
+        let diffPh = mp - op;
+        let phminus = 0; let phplus = 0;
+        if (diffPh > 0.1) { phminus = Math.round(diffPh * aktuelM3Mængde * 10); } 
+        else if (diffPh < -0.1) { phplus = Math.round(Math.abs(diffPh) * aktuelM3Mængde * 10); }
+        
+        document.getElementById('res-daytabs').innerText = daytabs;
+        document.getElementById('res-boost').innerText = boost;
+        document.getElementById('res-antiklor').innerText = antiklor;
+        document.getElementById('res-phminus').innerText = phminus;
+        document.getElementById('res-phplus').innerText = phplus;
+    }
+
     function lukOpgaveModal() { document.getElementById('opgave-modal').style.display = 'none'; bygOpgaveliste(); }
-    function redigerOpgave(id) { alert("Opgave-detaljer kan ses og styres direkte ved at trykke på kortet."); }
-    function sletOpgave(id) { if(confirm("Slet opgave?")) { opgaver = opgaver.filter(o => o.id !== id); gemAltTilHukommelse(); bygOpgaveliste(); } }
-    function aabenKortNavigation() { alert("Kortnavigation starter..."); }
-    function haardNulstilApp() { if(confirm("Slet alt?")) { localStorage.clear(); initialiserData(); visSide('side-opgaver'); } }
+    function sletOpgave(id) { if(confirm("Vil du slette denne opgave?")) { opgaver = opgaver.filter(o => o.id !== id); gemAltTilHukommelse(); bygOpgaveliste(); } }
+    function aabenKortNavigation() {
+        let adr = document.getElementById('m-adresse').innerText;
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}`, '_blank');
+    }
+    function haardNulstilApp() { if(confirm("Dette sletter ALT data permanent. Er du sikker?")) { localStorage.clear(); initialiserData(); visSide('side-opgaver'); } }
 
     initialiserData();
-    visSide('side-opgaver');
 </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v37</title>
+    <title>Pool Service App v38</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -196,7 +196,6 @@
     let brugerLat = null; let brugerLng = null;
     let opgaveSortering = 'dato-asc'; let kartotekSortering = 'az'; let historikSortering = 'nyest';
 
-    // INTEGRERET DANSK POSTNUMMER-DATABASE TIL AUTOMATISK OPSLAG
     const postnummerDatabase = {
         6857: "Blåvand", 6855: "Oksbøl", 6800: "Varde", 6700: "Esbjerg", 6950: "Ringkøbing",
         6960: "Hvide Sande", 7100: "Vejle", 8000: "Aarhus C", 9000: "Aalborg", 2000: "Frederiksberg",
@@ -219,7 +218,6 @@
         localStorage.setItem('pool_historik', JSON.stringify(historik));
     }
 
-    // AUTOMATISKE POSTNUMMER/BY FUNKTIONER
     function haandterPostnrInput() {
         let pnr = document.getElementById('hus-postnr').value;
         if(postnummerDatabase[pnr]) {
@@ -239,7 +237,6 @@
         }
     }
 
-    // GPS LUFTLINJE-AFSTAND (UD REGNET FRA ADRESSE GENNEM USYNLIG GEOLOCATION)
     function startGpsOvervaagning() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
@@ -250,20 +247,19 @@
             setInterval(() => {
                 navigator.geolocation.getCurrentPosition(pos => {
                     brugerLat = pos.coords.latitude; brugerLng = pos.coords.longitude;
-                    // Opdaterer kun værdierne lydløst så listen ikke flimrer eller forsvinder
                     opdaterAfstandeUdenGendannelse();
                 });
-            }, 60000); // Tjekker i baggrunden hvert minut
+            }, 60000);
         }
     }
 
-    // Matematisk estimat af koordinater ud fra postnummer/by for at undgå manuelle lat/lng felter
     function estimerKoordinater(postnr, by) {
-        // Standard center-koordinater for områder (Kan udvides automatisk)
-        if(parseInt(postnr) === 6857 || by.toLowerCase().includes("blåvand")) return {lat: 55.5542, lng: 8.1475};
-        if(parseInt(postnr) === 6855) return {lat: 55.6248, lng: 8.2858};
-        if(parseInt(postnr) === 6800) return {lat: 55.6211, lng: 8.4807};
-        return {lat: 55.5, lng: 8.4}; // Standard Jylland fallback hvis ukendt
+        let p = parseInt(postnr);
+        let b = by ? by.toLowerCase() : "";
+        if(p === 6857 || b.includes("blåvand")) return {lat: 55.5542, lng: 8.1475};
+        if(p === 6855 || b.includes("oksbøl")) return {lat: 55.6248, lng: 8.2858};
+        if(p === 6800 || b.includes("varde")) return {lat: 55.6211, lng: 8.4807};
+        return {lat: 55.5, lng: 8.4};
     }
 
     function beregnAfstandKm(lat1, lon1, lat2, lon2) {
@@ -384,12 +380,18 @@
 
         listeKopi.forEach(h => {
             let byText = (h.postnr || h.by) ? `${h.postnr || ''} ${h.by || ''}` : 'Ingen by indtastet';
-            b.innerHTML += `<div class="card"><strong>${h.adresse}</strong><br><span style="font-size:12px;color:#9ca3af;">${byText} (${h.type})</span>` +
+            b.innerHTML += `<div class="card" onclick="redigerHus(${h.id})"><strong>${h.adresse}</strong><br><span style="font-size:12px;color:#9ca3af;">${byText} (${h.type})</span>` +
             '<div class="card-actions">' +
             '<button class="action-btn" onclick="event.stopPropagation(); redigerHus('+h.id+')">✏️</button>' +
             '<button class="action-btn" onclick="event.stopPropagation(); sletHus('+h.id+')">❌</button>' +
             '</div></div>';
         });
+    }
+
+    function styreHustypeFelter() {
+        let type = document.getElementById('hus-type').value;
+        document.getElementById('felt-pool').style.display = (type === 'Pool') ? 'block' : 'none';
+        document.getElementById('felt-spa').style.display = (type === 'Spa') ? 'block' : 'none';
     }
 
     function bygHistorik() {
@@ -590,7 +592,7 @@
             basisPris = Math.ceil(minutterBrugt / 60) * 300;
         }
 
-        let ekstraTekst = document.getElementById('omk-tekst').value || "Ingen";
+        let ekstraTekst = document.getElementById('omk-tekst').value || "";
         let ekstraPris = parseFloat(document.getElementById('omk-pris').value) || 0;
         let totalPris = basisPris + ekstraPris;
 
@@ -690,32 +692,37 @@
 
     function visHistorikDetaljer(idTid) {
         let h = historik.find(item => item._idTid === idTid); if(!h) return;
-        let smsTekstStatus = h.smsSendt ? '<span style="color:#4ade80;">Sendt via SMS</span>' : '<span style="color:#9ca3af;">Kun gemt internt</span>';
+        let smsTekstStatus = h.smsSendt ? '<span style="color:#4ade80;">Sendt</span>' : '<span style="color:#9ca3af;">Ikke sendt</span>';
         let betalingStatusTekst = h.betalt ? '<strong style="color:#4ade80;">Betalt</strong>' : '<strong style="color:#ef4444;">Ikke betalt endnu</strong>';
         
         let indhold = `<strong>Hus:</strong> ${h.adresse}<br>` +
                       `<strong>Dato:</strong> ${h.dato || '-'}<br>` +
-                      `<strong>Opgavetype:</strong> ${h.type}<br>` +
-                      `<strong>Tidsforbrug:</strong> ${h.minutter} minutter<br>` +
-                      `<strong>Kvitterings-status:</strong> ${smsTekstStatus}<br>` +
+                      `<strong>Kvittering:</strong> ${smsTekstStatus}<br>` +
                       `<strong>Betalings-status:</strong> ${betalingStatusTekst}<br><hr style="border-color:#444;">`;
         
         if(h.kemi) {
-            indhold += `<strong>🧪 Dine interne målinger & doseringer:</strong><br>` +
-                       `• Målt Klor: ${h.kemi.maaltKlor} mg/l (Ønsket: ${h.kemi.oensketKlor})<br>` +
-                       `• Målt pH: ${h.kemi.maaltPh} (Ønsket: ${h.kemi.oensketPh})<br><br>` +
-                       `<strong>Anbefalet mængde du har lagt i:</strong><br>` +
-                       `• Daytabs: ${h.kemi.daytabs} stk.<br>` +
-                       `• Boost: ${h.kemi.boost} ml.<br>` +
-                       `• Antiklor: ${h.kemi.antiklor} ml.<br>` +
-                       `• pH-Minus: ${h.kemi.phminus} ml.<br>` +
-                       `• pH-Plus: ${h.kemi.phplus} ml.<br><hr style="border-color:#444;">`;
+            indhold += `<strong>🧪 Præcis kopi af kemiberegneren:</strong><br>` +
+                       `<div style="background:#111827; padding:10px; border-radius:6px; margin:5px 0; border:1px solid #333; font-size:13px;">` +
+                       `• Målt Klor: <strong>${h.kemi.maaltKlor} mg/l</strong> (Ønsket: ${h.kemi.oensketKlor})<br>` +
+                       `• Målt pH: <strong>${h.kemi.maaltPh}</strong> (Ønsket: ${h.kemi.oensketPh})<br><br>` +
+                       `<span style="color:#60a5fa; font-weight:bold;">Udregnet dosering lagt i:</span><br>` +
+                       `💊 Daytabs: ${h.kemi.daytabs} stk.<br>` +
+                       `🚀 Boost: ${h.kemi.boost} ml.<br>` +
+                       `📉 Antiklor: ${h.kemi.antiklor} ml.<br>` +
+                       `➖ pH-Minus: ${h.kemi.phminus} ml.<br>` +
+                       `➕ pH-Plus: ${h.kemi.phplus} ml.` +
+                       `</div><hr style="border-color:#444;">`;
         }
 
-        indhold += `<strong>💰 Pris-specifikation:</strong><br>` +
-                   `• Basispris: ${h.basisPris} kr.<br>` +
-                   `• Ekstra omkostninger: ${h.ekstraTekst} (${h.ekstraPris} kr.)<br>` +
-                   `• <strong>Totalpris i alt: ${h.samletPris} kr.</strong>`;
+        // RESTRUCTURERET TIL PROFESSIONEL "REGNING" SPECIFIKATION
+        indhold += `<strong>💰 Regning:</strong><br>` +
+                   `• ${h.type}: ${h.basisPris} kr.<br>`;
+                   
+        if(h.ekstraPris && h.ekstraPris > 0) {
+            indhold += `• Ekstra omkostninger: ${h.ekstraTekst} (${h.ekstraPris} kr.)<br>`;
+        }
+        
+        indhold += `<br><span style="font-size:15px;">• <strong>Pris i alt: <span style="color:#4ade80;">${h.samletPris} kr.</span></strong></span>`;
 
         document.getElementById('historik-detaljer-indhold').innerHTML = indhold;
         

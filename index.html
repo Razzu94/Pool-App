@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v45</title>
+    <title>Pool Service App v46</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -10,7 +10,7 @@
         .sektion { background: #1e1e1e; border: 1px solid #333; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: none; }
         h2 { color: white; margin-top: 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .top-bar { position: fixed; top: 0; left: 0; right: 0; background: #000; padding: 10px; text-align: center; border-bottom: 1px solid #222; z-index: 90; display: flex; justify-content: center; gap: 5px; }
-        .btn-nav { background: #374151; color: #d1d5db; border: none; padding: 10px 15px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; max-width: 130px; }
+        .btn-nav { background: #374151; color: #d1d5db; border: none; padding: 10px 8px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; max-width: 100px; text-align: center; }
         .btn-nav.active { background: #2563eb; color: white; }
         .card { background: #2a2a2a; border: 1px solid #444; padding: 12px; margin: 10px 0; border-radius: 8px; cursor: pointer; text-align: left; position: relative; }
         .card-actions { position: absolute; right: 10px; top: 12px; display: flex; gap: 10px; z-index: 10; }
@@ -44,6 +44,16 @@
         .note-visning { color: #facc15; font-size: 12px; margin-top: 4px; font-style: italic; background: rgba(250,204,21,0.1); padding: 3px 6px; border-radius: 4px; display: inline-block; }
         .omk-liste-item { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-top: 4px; display: flex; justify-content: space-between; }
         .img-preview { max-width: 100%; max-height: 150px; margin-top: 8px; border-radius: 6px; border: 1px solid #555; display: block; }
+        
+        /* REGNSKAB STYLES */
+        .regnskab-box { background: #262626; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+        .regnskab-linje { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #333; font-size: 14px; }
+        .regnskab-linje:last-child { border-bottom: none; }
+        .moms-bjaelke { text-align: center; font-size: 24px; font-weight: bold; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .moms-groen { background: rgba(22, 163, 74, 0.2); color: #4ade80; border: 2px solid #16a34a; }
+        .moms-roed { background: rgba(220, 38, 38, 0.2); color: #f87171; border: 2px solid #dc2626; }
+        .moms-advarsel-tekst { color: #f87171; font-weight: bold; text-align: center; margin-top: 5px; font-size: 14px; }
+        .til-gode-item { font-size: 13px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px dashed #444; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
@@ -52,6 +62,7 @@
     <button id="btn-nav-opg" onclick="visSide('side-opgaver')" class="btn-nav active">📋 Opgaver</button>
     <button id="btn-nav-kar" onclick="visSide('side-kartotek')" class="btn-nav">🏠 Kartotek</button>
     <button id="btn-nav-his" onclick="visSide('side-historik')" class="btn-nav">📜 Historik</button>
+    <button id="btn-nav-reg" onclick="visSide('side-regnskab')" class="btn-nav">📊 Regnskab</button>
 </div>
 
 <div class="container">
@@ -87,6 +98,28 @@
         <div id="historik-beholder"></div>
     </div>
 
+    <div id="side-regnskab" class="sektion">
+        <h2>📊 Forretningsregnskab</h2>
+        
+        <div id="moms-alarm-ramme" class="moms-bjaelke moms-groen">0 kr.</div>
+        <div id="moms-advarsel-label" class="moms-advarsel-tekst" style="display:none;">⚠️ Momsadvarsel</div>
+        
+        <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">💰 Faktisk Indtjening (Kun betalte)</h3>
+        <div class="regnskab-box">
+            <div class="regnskab-linje" style="font-weight:bold; color:white;"><span>Total indtjening:</span><span id="reg-total-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>🏊‍♂️ Poolkontrol:</span><span id="reg-pool-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>🛁 Spakontrol:</span><span id="reg-spa-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>📦 Lindetpakker:</span><span id="reg-lindet-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>🛠️ Ad-hoc opgaver:</span><span id="reg-adhoc-indtjening">0 kr.</span></div>
+        </div>
+
+        <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">⏳ Udestående til gode (Ikke betalt)</h3>
+        <div class="regnskab-box">
+            <div class="regnskab-linje" style="font-weight:bold; color:#facc15; border-bottom:1px solid #444; padding-bottom:8px;"><span>Samlet til gode:</span><span id="reg-total-tilgode">0 kr.</span></div>
+            <div id="reg-tilgode-liste" style="margin-top:5px; max-height:150px; overflow-y:auto;"></div>
+        </div>
+    </div>
+
     <div id="side-opret-opgave" class="sektion">
         <h2 id="opg-skema-titel">➕ Opret Ny Opgave</h2>
         <input id="opg-id-skjult" type="hidden" value="">
@@ -109,12 +142,20 @@
             <div class="form-group" id="felt-fast-pris-input-ramme" style="display:none;"><label>Aftalt fast pris (kr.) *</label><input id="opret-opg-fastpris-kroner" type="number" placeholder="F.eks. 500"></div>
         </div>
 
+        <div id="opret-lindet-specifikke-felter" style="display:none; background:rgba(255,255,255,0.03); padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:12px;">
+            <div class="form-group">
+                <label>Antal Lindetpakker *</label>
+                <input id="opret-opg-lindet-antal" type="number" min="0" value="1" placeholder="F.eks. 2">
+                <small style="color:#9ca3af; font-size:11px; display:block; margin-top:4px;">Udbringning: 150 kr. + 150 kr. pr. pakke.</small>
+            </div>
+        </div>
+
         <div class="form-group"><label>Intern note til denne specifikke opgave</label><input id="opret-opg-note" type="text" placeholder="F.eks. Skal tages efter klokken 14:00"></div>
         <button onclick="gemNyOpgave()">Gem Opgave</button>
         <button onclick="visSide('side-opgaver')" class="btn-annuller">Annuller</button>
     </div>
 
-    <div id="side-opret-house" class="sektion" id="side-opret-hus">
+    <div id="side-opret-hus" class="sektion">
         <h2 id="hus-skema-titel">🏠 Tilføj Hus til Kartotek</h2>
         <input id="hus-id-skjult" type="hidden" value="">
         <div class="form-group"><label>Adresse (Vejnavn og husnummer) *</label><input id="hus-adresse" type="text" placeholder="F.eks. Linnedvænget 9"></div>
@@ -189,6 +230,13 @@
                 📉 Antiklor: <span id="res-antiklor" style="color: #ef4444; font-weight: bold;">0</span> ml.<br>
                 ➖ pH-Minus: <span id="res-phminus" style="color: #facc15; font-weight: bold;">0</span> ml.<br>
                 ➕ pH-Plus: <span id="res-phplus" style="color: #4ade80; font-weight: bold;">0</span> ml.
+            </div>
+        </div>
+
+        <div id="lindet-afkryds-sektion" style="display:none; margin-bottom:15px; background:rgba(96,165,250,0.1); padding:12px; border-radius:6px; border:1px solid #3b82f6;">
+            <div class="checkbox-item">
+                <input type="checkbox" id="m-lindet-afkryds" onchange="haandterLindetAfkrydsning()">
+                <label for="m-lindet-afkryds" style="margin:0; color:white; font-weight:bold; font-size:15px; cursor:pointer;">📦 Lindetpakker er leveret</label>
             </div>
         </div>
 
@@ -274,6 +322,7 @@
         localStorage.setItem('pool_kartotek', JSON.stringify(kartotek));
         localStorage.setItem('pool_opgaver', JSON.stringify(opgaver));
         localStorage.setItem('pool_historik', JSON.stringify(historik));
+        opdaterRegnskabstal();
     }
     function haandterPostnrInput() {
         let pnr = document.getElementById('hus-postnr').value;
@@ -310,6 +359,7 @@
         document.getElementById('side-opgaver').style.display = 'none';
         document.getElementById('side-kartotek').style.display = 'none';
         document.getElementById('side-historik').style.display = 'none';
+        document.getElementById('side-regnskab').style.display = 'none';
         document.getElementById('side-opret-opgave').style.display = 'none';
         let sh = document.getElementById('side-opret-hus'); if(sh) sh.style.display = 'none';
         
@@ -318,6 +368,7 @@
         if(sideId === 'side-opgaver') { document.getElementById('btn-nav-opg').classList.add('active'); bygOpgaveliste(); }
         if(sideId === 'side-kartotek') { document.getElementById('btn-nav-kar').classList.add('active'); bygKartotek(); }
         if(sideId === 'side-historik') { document.getElementById('btn-nav-his').classList.add('active'); bygHistorik(); }
+        if(sideId === 'side-regnskab') { document.getElementById('btn-nav-reg').classList.add('active'); opdaterRegnskabstal(); }
     }
 
     function setOpgaveSortering(type) { opgaveSortering = type; bygOpgaveliste(); }
@@ -353,7 +404,7 @@
             let hus = kartotek.find(h => h.id === o.kartotekId);
             let adresseVisning = hus ? hus.adresse : "Ukendt hus";
             let statusText = o.startet ? '⏳ I GANG' : 'KLAR';
-            let labelTypeStr = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel || ''}` : o.type;
+            let labelTypeStr = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel || ''}` : (o.type === "Lindetpakker" ? `📦 Lindetpakker (${o.lindetAntal || 0} stk)` : o.type);
             let afstStr = (o._afstand !== null && o._afstand !== undefined) ? `📍 ${o._afstand.toFixed(1)} km` : `📍 -- km`;
             let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
             
@@ -410,7 +461,7 @@
         listeKopi.forEach(h => {
             let bKlasse = h.betalt ? 'status-betalt' : 'status-ej-betalt';
             let bTekst = h.betalt ? 'BETALT' : 'IKKE BETALT';
-            let tLabel = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel || ''}` : h.type;
+            let tLabel = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel || ''}` : (h.type === "Lindetpakker" ? `📦 Lindetpakker (${h.lindetAntal || 0} stk)` : h.type);
             
             b.innerHTML += `
                 <div class="card" onclick="visHistorikDetaljer(${h._idTid})">
@@ -419,6 +470,59 @@
                     <span style="font-size:12px;color:#9ca3af;">📅 ${h.dato || '-'} • ${tLabel} • <strong>${h.samletPris} kr.</strong></span>
                 </div>`;
         });
+    }
+
+    function opdaterRegnskabstal() {
+        let totalIndtjening = 0; let poolIndtjening = 0; let spaIndtjening = 0; let lindetIndtjening = 0; let adhocIndtjening = 0;
+        let totalTilgode = 0;
+        let tilgodeListeBeholder = document.getElementById('reg-tilgode-liste');
+        if (tilgodeListeBeholder) tilgodeListeBeholder.innerHTML = '';
+
+        historik.forEach(h => {
+            if (h.betalt) {
+                totalIndtjening += h.samletPris;
+                if (h.type === "Poolkontrol") poolIndtjening += h.samletPris;
+                else if (h.type === "Spakontrol") spaIndtjening += h.samletPris;
+                else if (h.type === "Lindetpakker") lindetIndtjening += h.samletPris;
+                else if (h.type === "Ad-hoc") adhocIndtjening += h.samletPris;
+            } else {
+                totalTilgode += h.samletPris;
+                if (tilgodeListeBeholder) {
+                    tilgodeListeBeholder.innerHTML += `
+                        <div class="til-gode-item">
+                            <span>🏠 ${h.adresse} (${h.type === 'Lindetpakker' ? 'Pakker' : h.type})</span>
+                            <span style="font-weight:bold; color:#ef4444;">${h.samletPris} kr.</span>
+                        </div>`;
+                }
+            }
+        });
+
+        if (tilgodeListeBeholder && tilgodeListeBeholder.innerHTML === '') {
+            tilgodeListeBeholder.innerHTML = '<p style="color:#6b7280; font-size:12px; text-align:center; margin:5px 0;">Ingen udestående regninger! 🙌</p>';
+        }
+
+        // Opdater tekstfelter
+        document.getElementById('reg-total-indtjening').innerText = totalIndtjening + " kr.";
+        document.getElementById('reg-pool-indtjening').innerText = poolIndtjening + " kr.";
+        document.getElementById('reg-spa-indtjening').innerText = spaIndtjening + " kr.";
+        document.getElementById('reg-lindet-indtjening').innerText = lindetIndtjening + " kr.";
+        document.getElementById('reg-adhoc-indtjening').innerText = adhocIndtjening + " kr.";
+        document.getElementById('reg-total-tilgode').innerText = totalTilgode + " kr.";
+
+        // Momsalarm logik (Grænse: 40000)
+        let alarmBjælke = document.getElementById('moms-alarm-ramme');
+        let advarselLabel = document.getElementById('moms-advarsel-label');
+        
+        if (alarmBjælke) {
+            alarmBjælke.innerText = totalIndtjening + " kr.";
+            if (totalIndtjening >= 40000) {
+                alarmBjælke.className = "moms-bjaelke moms-roed";
+                if(advarselLabel) advarselLabel.style.display = "block";
+            } else {
+                alarmBjælke.className = "moms-bjaelke moms-groen";
+                if(advarselLabel) advarselLabel.style.display = "none";
+            }
+        }
     }
 
     function aabenOpretOpgaveSide() {
@@ -430,6 +534,7 @@
         document.getElementById('opret-opg-note').value = "";
         document.getElementById('opret-opg-titel').value = "";
         document.getElementById('opret-opg-fastpris-kroner').value = "";
+        document.getElementById('opret-opg-lindet-antal').value = "1";
         haandterHusValgIOpgave(); visSide('side-opret-opgave');
     }
 
@@ -460,6 +565,8 @@
                 document.getElementById('pris-type-time').checked = true;
             }
             styreFastPrisFelt();
+        } else if(o.type === "Lindetpakker") {
+            document.getElementById('opret-opg-lindet-antal').value = o.lindetAntal || "1";
         }
         visSide('side-opret-opgave');
     }
@@ -471,6 +578,7 @@
         
         if(hus.hasPool || hus.hasPool === undefined) typeSelect.innerHTML += '<option value="Poolkontrol">Poolkontrol (400 kr.)</option>';
         if(hus.hasSpa) typeSelect.innerHTML += '<option value="Spakontrol">Spakontrol (300 kr.)</option>';
+        typeSelect.innerHTML += '<option value="Lindetpakker">Udbringning af Lindetpakker</option>';
         typeSelect.innerHTML += '<option value="Ad-hoc">Ad-hoc opgave</option>';
         styreOpgaveTypeFelter();
     }
@@ -478,6 +586,7 @@
     function styreOpgaveTypeFelter() {
         let t = document.getElementById('opret-opg-type').value;
         document.getElementById('opret-adhoc-specifikke-felter').style.display = (t === "Ad-hoc") ? 'block' : 'none';
+        document.getElementById('opret-lindet-specifikke-felter').style.display = (t === "Lindetpakker") ? 'block' : 'none';
         styreFastPrisFelt();
     }
     function styreFastPrisFelt() {
@@ -496,14 +605,15 @@
         let tStr = document.getElementById('opret-opg-titel').value.trim();
         let pForm = document.querySelector('input[name="adhoc-pris-type"]:checked')?.value || "time";
         let fPris = parseFloat(document.getElementById('opret-opg-fastpris-kroner').value) || 0;
+        let lAntal = parseInt(document.getElementById('opret-opg-lindet-antal').value) || 0;
 
         if(t === "Ad-hoc" && !tStr) { alert("Angiv venligst en titel til ad-hoc opgaven."); return; }
 
         if(idSkjult) {
             let o = opgaver.find(item => item.id == idSkjult);
-            if(o) { o.kartotekId = hId; o.dato = d; o.type = t; o.note = n; o.titel = tStr; o.prisForm = pForm; o.fastPris = fPris; }
+            if(o) { o.kartotekId = hId; o.dato = d; o.type = t; o.note = n; o.titel = tStr; o.prisForm = pForm; o.fastPris = fPris; o.lindetAntal = lAntal; }
         } else {
-            opgaver.push({ id: Date.now(), kartotekId: hId, dato: d, type: t, note: n, titel: tStr, prisForm: pForm, fastPris: fPris, startet: null, omkostninger: [] });
+            opgaver.push({ id: Date.now(), kartotekId: hId, dato: d, type: t, note: n, titel: tStr, prisForm: pForm, fastPris: fPris, lindetAntal: lAntal, startet: null, omkostninger: [] });
         }
         gemAltTilHukommelse(); visSide('side-opgaver');
     }
@@ -589,7 +699,7 @@
         if(o.note) nRamme.innerHTML += `<div style="background:rgba(250,204,21,0.15); border-left:4px solid #facc15; padding:8px; font-size:13px; color:white;"><strong>📝 Opgave note:</strong> ${o.note}</div>`;
 
         document.getElementById('m-navn').innerText = hus.adresse;
-        document.getElementById('m-type').innerText = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel}` : o.type;
+        document.getElementById('m-type').innerText = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel}` : (o.type === "Lindetpakker" ? "Udbringning af Lindetpakker" : o.type);
         document.getElementById('m-adresse').innerText = hus.adresse + (hus.by ? ", " + hus.by : "");
         document.getElementById('m-kode').innerText = hus.kode || "-";
         document.getElementById('m-dato-visning').innerText = o.dato || "-";
@@ -601,31 +711,50 @@
         } else if(o.type === "Poolkontrol") {
             document.getElementById('m-stoerrelse-visning').innerText = "Pool: " + (hus.pool || 27) + " m³";
             aktuelM3Mængde = hus.pool || 27;
+        } else if(o.type === "Lindetpakker") {
+            let pPris = (o.lindetAntal || 0) * 150;
+            document.getElementById('m-stoerrelse-visning').innerText = `Udbringning + ${o.lindetAntal || 0} stk. pakker (${150 + pPris} kr.)`;
         } else {
             let pBeskrivelse = o.prisForm === "fast" ? `Fast pris: ${o.fastPris} kr.` : "Timepris (300 kr./t)";
             document.getElementById('m-stoerrelse-visning').innerText = pBeskrivelse;
         }
         
-        if(o.type === "Poolkontrol" || o.type === "Spakontrol") {
-            document.getElementById('kemi-sektion').style.display = 'block';
-            document.getElementById('m-adhoc-arbejdsrapport-felt').style.display = 'none';
-        } else {
-            document.getElementById('kemi-sektion').style.display = 'none';
-            document.getElementById('m-adhoc-arbejdsrapport-felt').style.display = 'block';
+        // Håndter synlighed af de rigtige moduler baseret på type
+        document.getElementById('kemi-sektion').style.display = (o.type === "Poolkontrol" || o.type === "Spakontrol") ? 'block' : 'none';
+        document.getElementById('m-adhoc-arbejdsrapport-felt').style.display = (o.type === "Ad-hoc") ? 'block' : 'none';
+        document.getElementById('lindet-afkryds-sektion').style.display = (o.type === "Lindetpakker") ? 'block' : 'none';
+
+        if(o.type === "Lindetpakker") {
+            document.getElementById('m-lindet-afkryds').checked = !!o.lindetLeveret;
         }
 
-        if(o.startet) {
+        if(o.startet || (o.type === "Lindetpakker" && o.lindetLeveret)) {
             document.getElementById('btn-start').style.display = 'none';
             document.getElementById('afslut-afsnit').style.display = 'block';
             document.getElementById('igang-felter-container').style.display = 'block';
             document.getElementById('m-status').innerText = "Status: I gang";
         } else {
-            document.getElementById('btn-start').style.display = 'block';
+            document.getElementById('btn-start').style.display = (o.type === "Lindetpakker") ? 'none' : 'block';
             document.getElementById('afslut-afsnit').style.display = 'none';
             document.getElementById('igang-felter-container').style.display = 'none';
             document.getElementById('m-status').innerText = "Status: Klar";
         }
         document.getElementById('opgave-modal').style.display = 'flex';
+    }
+
+    function haandterLindetAfkrydsning() {
+        let o = opgaver.find(item => item.id === aktivOpgaveId);
+        if(o) {
+            o.lindetLeveret = document.getElementById('m-lindet-afkryds').checked;
+            if(o.lindetLeveret) {
+                document.getElementById('afslut-afsnit').style.display = 'block';
+                document.getElementById('igang-felter-container').style.display = 'block';
+            } else {
+                document.getElementById('afslut-afsnit').style.display = 'none';
+                document.getElementById('igang-felter-container').style.display = 'none';
+            }
+            gemAltTilHukommelse();
+        }
     }
 
     function haandterFotoValg() {
@@ -671,8 +800,17 @@
         let minutterBrugt = o.startet ? Math.round((nu - o.startet) / 60000) : 1; if(minutterBrugt < 1) minutterBrugt = 1;
         
         let basisPris = 0; let prisLabel = "";
+        let pakkeLinjeSms = "";
+        
         if(o.type === "Poolkontrol") { basisPris = 400; prisLabel = "Poolkontrol"; }
         else if(o.type === "Spakontrol") { basisPris = 300; prisLabel = "Spakontrol"; }
+        else if(o.type === "Lindetpakker") {
+            basisPris = 150; prisLabel = "Udbringningsgebyr";
+            let pakkePrisTotal = (o.lindetAntal || 0) * 150;
+            if((o.lindetAntal || 0) > 0) {
+                pakkeLinjeSms = `Lindetpakker (${o.lindetAntal} stk.): ${pakkePrisTotal} kr.\n`;
+            }
+        }
         else if(o.type === "Ad-hoc") {
             if(o.prisForm === "fast") { basisPris = o.fastPris; prisLabel = "Fast pris"; } 
             else {
@@ -683,7 +821,9 @@
 
         let samletEkstraPris = 0;
         midlertidigOmkListe.forEach(omk => samletEkstraPris += omk.pris);
+        
         let totalPris = basisPris + samletEkstraPris;
+        if(o.type === "Lindetpakker") { totalPris += ((o.lindetAntal || 0) * 150); }
 
         let adhocRapportTekst = document.getElementById('m-adhoc-udfoert-tekst').value.trim();
         let smsNoteBruger = document.getElementById('m-sms-note').value.trim();
@@ -692,7 +832,7 @@
             _idTid: nu, adresse: hus.adresse, type: o.type, titel: o.titel || '', dato: o.dato, minutter: minutterBrugt,
             basisPris: basisPris, prisLabel: prisLabel, omkostninger: [...midlertidigOmkListe],
             samletPris: totalPris, smsSendt: sendSmsJaNej, betalt: false, noteTilSms: smsNoteBruger, 
-            internRapport: adhocRapportTekst, fotoB64: gemtFotoBase64
+            internRapport: adhocRapportTekst, fotoB64: gemtFotoBase64, lindetAntal: o.lindetAntal || 0
         });
 
         if(sendSmsJaNej && hus.telefon) {
@@ -701,6 +841,8 @@
             
             if(o.type === "Ad-hoc") {
                 smsTekst += `Jeg har d. ${smsDato} udført opgaven: ${o.titel} på ${hus.adresse}.\n\n`;
+            } else if(o.type === "Lindetpakker") {
+                smsTekst += `Jeg har d. ${smsDato} leveret Lindetpakker på ${hus.adresse}.\n\n`;
             } else {
                 let facilitetNavn = o.type === "Spakontrol" ? "Spaen" : "Poolen";
                 smsTekst += `Jeg har d. ${smsDato} udført ${o.type} på ${hus.adresse}.\n\n`;
@@ -710,6 +852,8 @@
             if(smsNoteBruger) smsTekst += `${smsNoteBruger}\n\n`;
             
             smsTekst += `Regning:\n${prisLabel}: ${basisPris} kr.\n`;
+            if(pakkeLinjeSms) smsTekst += pakkeLinjeSms;
+            
             if(midlertidigOmkListe.length > 0) {
                 midlertidigOmkListe.forEach(omk => { smsTekst += `${omk.tekst}: ${omk.pris} kr.\n`; });
             }
@@ -726,7 +870,7 @@
 
     function visHistorikDetaljer(idTid) {
         let h = historik.find(item => item._idTid === idTid); if(!h) return;
-        let tLabel = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel}` : h.type;
+        let tLabel = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel}` : (h.type === "Lindetpakker" ? `📦 Lindetpakker (${h.lindetAntal} stk)` : h.type);
         
         let indhold = `<strong>Hus:</strong> ${h.adresse}<br><strong>Dato:</strong> ${h.dato || '-'}<br><strong>Type:</strong> ${tLabel}<br><hr style="border-color:#444;">`;
         
@@ -738,6 +882,9 @@
         }
         
         indhold += `<strong>💰 Regning:</strong><br>• ${h.prisLabel}: ${h.basisPris} kr.<br>`;
+        if(h.type === "Lindetpakker" && h.lindetAntal > 0) {
+            indhold += `• Lindetpakker (${h.lindetAntal} stk): ${h.lindetAntal * 150} kr.<br>`;
+        }
         if(h.omkostninger && h.omkostninger.length > 0) {
             h.omkostninger.forEach(o => { indhold += `• ${o.tekst}: ${o.pris} kr.<br>`; });
         }
@@ -798,6 +945,11 @@
     function haandterInternRapportInput() {
         let o = opgaver.find(item => item.id === aktivOpgaveId);
         if(o) { o.udfoertRapport = document.getElementById('m-adhoc-udfoert-tekst').value; gemAltTilHukommelse(); }
+    }
+    function haardNulstilApp() {
+        if(confirm("BEMÆRK: Dette sletter alt data i appen permanent! Er du sikker?")) {
+            localStorage.clear(); window.location.reload();
+        }
     }
     
     document.getElementById('m-sms-note').addEventListener('input', haandterSmsNoteInput);

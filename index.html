@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v28 - REPARERET & PRÆCIS</title>
+    <title>Pool Service App v29 - 100% FUNKTIONEL</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -12,8 +12,6 @@
         .top-bar { position: fixed; top: 0; left: 0; right: 0; background: #000; padding: 10px; text-align: center; border-bottom: 1px solid #222; z-index: 90; display: flex; justify-content: center; gap: 5px; }
         .btn-nav { background: #374151; color: #d1d5db; border: none; padding: 10px 15px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; max-width: 130px; }
         .btn-nav.active { background: #2563eb; color: white; }
-        .sort-bar { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-sort { background: #2a2a2a; border: 1px solid #444; color: #9ca3af; padding: 6px 10px; font-size: 12px; border-radius: 6px; cursor: pointer; flex: 1; }
         .card { background: #2a2a2a; border: 1px solid #444; padding: 12px; margin: 10px 0; border-radius: 8px; cursor: pointer; text-align: left; position: relative; }
         .form-group { margin-bottom: 12px; text-align: left; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -25,11 +23,9 @@
         .btn-afslut { background: #16a34a; }
         .btn-maps { background: #0284c7; margin-bottom: 5px; }
         .btn-slet { background: #dc2626; }
-        .btn-rediger { background: #d97706; }
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; padding: 15px; z-index: 100; }
         .modal-content { background: #1e1e1e; border: 1px solid #444; width: 100%; max-width: 350px; border-radius: 10px; padding: 20px; text-align: left; }
         .info-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; }
-        .hidden-field { display: none; }
         .kemi-resultat { background: #111827; border-left: 4px solid #facc15; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 14px; line-height: 1.5; }
     </style>
 </head>
@@ -142,7 +138,7 @@
             historik = JSON.parse(localStorage.getItem('pool_historik')) || [];
         } catch(e) { kartotek = []; opgaver = []; historik = []; }
         
-        if (kartotek.length === 0) {
+        if (!Array.isArray(kartotek) || kartotek.length === 0) {
             kartotek = [{ id: 101, adresse: "Stenurtvej 28", by: "Blåvand", kode: "4321", placering: "Ved bagdøren", type: "Pool", pool: 23, spa: 0 }];
             opgaver = [{ id: 1, kartotekId: 101, dato: "2026-05-20", type: "Poolkontrol", startet: null }];
             gemAltTilHukommelse();
@@ -209,7 +205,7 @@
         kartotek.forEach(h => { select.innerHTML += '<option value="'+h.id+'">'+h.adresse+'</option>'; });
         
         let iDato = document.getElementById('opret-opg-dato');
-        if(iDato) { let iDag = new Date(); iDato.value = iDag.toISOString().URIEncodedsplit('T')[0] || "2026-05-20"; }
+        if(iDato) { iDato.value = new Date().toISOString().split('T')[0]; }
         visSide('side-opret-opgave');
     }
 
@@ -291,26 +287,20 @@
         let oKlor = parseFloat(document.getElementById('kemi-oensket-klor').value) || 0;
         let mPh = parseFloat(document.getElementById('kemi-maalt-ph').value) || 7.0;
 
-        // Omregn automatisk volumet hvis det er en spa (liter til m3)
         let m3 = (o && o.type === "Spakontrol" && inputVol > 100) ? (inputVol / 1000) : inputVol;
 
         let boost = 0; let antiklor = 0; let phminus = 0;
 
-        // 1. BOOST (1.35 ml pr. m3 pr. mg/l mangel)
         if (mKlor < oKlor) {
             boost = m3 * (oKlor - mKlor) * 1.35;
-        } 
-        // 2. ANTIKLOR (m3 * mangel / 1.2)
-        else if (mKlor > oKlor) {
+        } else if (mKlor > oKlor) {
             antiklor = (m3 * (mKlor - oKlor)) / 1.2;
         }
 
-        // 3. PH-MINUS (Sænkning med 0.1 kræver 3.5 ml pr. m3 -> Svarer til 35 pr. hel enhed)
         if (mPh > 7.0) {
             phminus = m3 * (mPh - 7.0) * 35;
         }
 
-        // 4. KLOR-STIGNING (Hvis der boostes, kompenserer vi for at klor hæver pH)
         if (boost > 0) {
             phminus += (boost * 0.15);
         }
@@ -323,7 +313,7 @@
     function aabenKortNavigation() {
         let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
         let hus = kartotek.find(h => h.id === o.kartotekId);
-        if(hus) window.open("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(hus.adresse), '_blank');
+        if(hus) window.open("http://maps.google.com/?q=" + encodeURIComponent(hus.adresse), '_blank');
     }
 
     function haardNulstilApp() { localStorage.clear(); initialiserData(); visSide('side-opgaver'); }

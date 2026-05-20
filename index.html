@@ -52,7 +52,7 @@
         .moms-bjaelke { text-align: center; font-size: 24px; font-weight: bold; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
         .moms-groen { background: rgba(22, 163, 74, 0.2); color: #4ade80; border: 2px solid #16a34a; }
         .moms-roed { background: rgba(220, 38, 38, 0.2); color: #f87171; border: 2px solid #dc2626; }
-        .moms-advarsel-tekst { color: #f87171; font-weight: bold; text-align: center; margin-top: 5px; font-size: 14px; }
+        .moms-advarsel-tekst { color: #f87171; font-weight: bold; text-align: center; margin-top: -10px; margin-bottom: 15px; font-size: 14px; }
         .til-gode-item { font-size: 13px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px dashed #444; display: flex; justify-content: space-between; }
     </style>
 </head>
@@ -107,10 +107,10 @@
         <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">💰 Faktisk Indtjening (Kun betalte)</h3>
         <div class="regnskab-box">
             <div class="regnskab-linje" style="font-weight:bold; color:white;"><span>Total indtjening:</span><span id="reg-total-indtjening">0 kr.</span></div>
-            <div class="regnskab-linje"><span>🏊‍♂️ Poolkontrol:</span><span id="reg-pool-indtjening">0 kr.</span></div>
-            <div class="regnskab-linje"><span>🛁 Spakontrol:</span><span id="reg-spa-indtjening">0 kr.</span></div>
-            <div class="regnskab-linje"><span>📦 Lindetpakker:</span><span id="reg-lindet-indtjening">0 kr.</span></div>
-            <div class="regnskab-linje"><span>🛠️ Ad-hoc opgaver:</span><span id="reg-adhoc-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>🏊‍♂️ Poolkontrol i alt:</span><span id="reg-pool-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>🛁 Spakontrol i alt:</span><span id="reg-spa-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>📦 Lindetpakker i alt:</span><span id="reg-lindet-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>🛠️ Ad-hoc opgaver i alt:</span><span id="reg-adhoc-indtjening">0 kr.</span></div>
         </div>
 
         <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">⏳ Udestående til gode (Ikke betalt)</h3>
@@ -242,8 +242,8 @@
 
         <div id="igang-felter-container" style="display:none;">
             <div id="m-adhoc-arbejdsrapport-felt" class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:15px; display:none;">
-                <label style="color:#60a5fa; font-weight:bold;">✍️ Hvad har du lavet på denne ad-hoc opgave? (Kun internt)</label>
-                <textarea id="m-adhoc-udfoert-tekst" rows="3" placeholder="Beskriv arbejdet til historikken her..."></textarea>
+                <label style="color:#60a5fa; font-weight:bold;">✍️ Internt notefelt / Arbejdsrapport (Gemmes kun i historikken)</label>
+                <textarea id="m-adhoc-udfoert-tekst" rows="3" placeholder="Beskriv arbejdet eller tilstanden internt her..."></textarea>
             </div>
 
             <div class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:15px;">
@@ -284,8 +284,8 @@
     <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
         <h3 style="margin:0 0 10px 0;color:white;">📜 Opgavedetaljer</h3>
         <div id="historik-detaljer-indhold" style="font-size:14px; line-height:1.6; color:#d1d5db;"></div>
-        <div id="historik-betalings-knap-ramme" style="margin-top:15px;"></div>
-        <button onclick="document.getElementById('historik-modal').style.display='none'" class="btn-annuller">Luk oversigt</button>
+        <div id="historik-betalings-knap-ramme" style="margin-top:15px; display:flex; gap:10px; flex-direction:column;"></div>
+        <button onclick="document.getElementById('historik-modal').style.display='none'" class="btn-annuller" style="margin-top:10px;">Luk oversigt</button>
     </div>
 </div>
 
@@ -481,16 +481,17 @@
         historik.forEach(h => {
             if (h.betalt) {
                 totalIndtjening += h.samletPris;
-                if (h.type === "Poolkontrol") poolIndtjening += h.samletPris;
-                else if (h.type === "Spakontrol") spaIndtjening += h.samletPris;
+                if (h.type.startsWith("Poolkontrol")) poolIndtjening += h.samletPris;
+                else if (h.type.startsWith("Spakontrol")) spaIndtjening += h.samletPris;
                 else if (h.type === "Lindetpakker") lindetIndtjening += h.samletPris;
                 else if (h.type === "Ad-hoc") adhocIndtjening += h.samletPris;
             } else {
                 totalTilgode += h.samletPris;
                 if (tilgodeListeBeholder) {
+                    let kortType = h.type === 'Lindetpakker' ? 'Pakker' : (h.type === 'Poolkontrol + Bundsugning' ? 'Pool+Sug' : h.type);
                     tilgodeListeBeholder.innerHTML += `
                         <div class="til-gode-item">
-                            <span>🏠 ${h.adresse} (${h.type === 'Lindetpakker' ? 'Pakker' : h.type})</span>
+                            <span>🏠 ${h.adresse} (${kortType})</span>
                             <span style="font-weight:bold; color:#ef4444;">${h.samletPris} kr.</span>
                         </div>`;
                 }
@@ -501,7 +502,6 @@
             tilgodeListeBeholder.innerHTML = '<p style="color:#6b7280; font-size:12px; text-align:center; margin:5px 0;">Ingen udestående regninger! 🙌</p>';
         }
 
-        // Opdater tekstfelter
         document.getElementById('reg-total-indtjening').innerText = totalIndtjening + " kr.";
         document.getElementById('reg-pool-indtjening').innerText = poolIndtjening + " kr.";
         document.getElementById('reg-spa-indtjening').innerText = spaIndtjening + " kr.";
@@ -509,7 +509,6 @@
         document.getElementById('reg-adhoc-indtjening').innerText = adhocIndtjening + " kr.";
         document.getElementById('reg-total-tilgode').innerText = totalTilgode + " kr.";
 
-        // Momsalarm logik (Grænse: 40000)
         let alarmBjælke = document.getElementById('moms-alarm-ramme');
         let advarselLabel = document.getElementById('moms-advarsel-label');
         
@@ -576,10 +575,19 @@
         let hus = kartotek.find(h => h.id === hId); if(!hus) return;
         let typeSelect = document.getElementById('opret-opg-type'); typeSelect.innerHTML = '';
         
-        if(hus.hasPool || hus.hasPool === undefined) typeSelect.innerHTML += '<option value="Poolkontrol">Poolkontrol (400 kr.)</option>';
-        if(hus.hasSpa) typeSelect.innerHTML += '<option value="Spakontrol">Spakontrol (300 kr.)</option>';
-        typeSelect.innerHTML += '<option value="Lindetpakker">Udbringning af Lindetpakker</option>';
+        // Sorteret rækkefølge efter relevans med de nye typer
+        if(hus.hasPool || hus.hasPool === undefined) {
+            typeSelect.innerHTML += '<option value="Poolkontrol">Poolkontrol (400 kr.)</option>';
+            typeSelect.innerHTML += '<option value="Poolkontrol + Bundsugning">Poolkontrol + Bundsugning (600 kr.)</option>';
+        }
+        if(hus.hasSpa) {
+            typeSelect.innerHTML += '<option value="Spakontrol">Spakontrol (300 kr.)</option>';
+            typeSelect.innerHTML += '<option value="Spakontrol + Skift af vand">Spakontrol + Skift af vand (600 kr.)</option>';
+            typeSelect.innerHTML += '<option value="Spakontrol + Pipecleaner">Spakontrol + Pipecleaner (1000 kr.)</option>';
+        }
         typeSelect.innerHTML += '<option value="Ad-hoc">Ad-hoc opgave</option>';
+        typeSelect.innerHTML += '<option value="Lindetpakker">Udbringning af Lindetpakker</option>'; // Ligger altid nederst nu
+        
         styreOpgaveTypeFelter();
     }
 
@@ -699,19 +707,20 @@
         if(o.note) nRamme.innerHTML += `<div style="background:rgba(250,204,21,0.15); border-left:4px solid #facc15; padding:8px; font-size:13px; color:white;"><strong>📝 Opgave note:</strong> ${o.note}</div>`;
 
         document.getElementById('m-navn').innerText = hus.adresse;
-        document.getElementById('m-type').innerText = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel}` : (o.type === "Lindetpakker" ? "Udbringning af Lindetpakker" : o.type);
+        document.getElementById('m-type').innerText = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel}` : o.type;
         document.getElementById('m-adresse').innerText = hus.adresse + (hus.by ? ", " + hus.by : "");
         document.getElementById('m-kode').innerText = hus.kode || "-";
         document.getElementById('m-dato-visning').innerText = o.dato || "-";
         document.getElementById('m-telefon-visning').innerText = hus.telefon || "-";
         
-        if (o.type === "Spakontrol") {
-            document.getElementById('m-stoerrelse-visning').innerText = "Spa: " + (hus.spa || 1500) + " L";
-            aktuelM3Mængde = (hus.spa > 100) ? (hus.spa / 1000) : hus.spa;
-        } else if(o.type === "Poolkontrol") {
+        // Håndter tekster og værdier baseret på de nye specifikke typer
+        if (o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning") {
             document.getElementById('m-stoerrelse-visning').innerText = "Pool: " + (hus.pool || 27) + " m³";
             aktuelM3Mængde = hus.pool || 27;
-        } else if(o.type === "Lindetpakker") {
+        } else if (o.type.startsWith("Spakontrol")) {
+            document.getElementById('m-stoerrelse-visning').innerText = "Spa: " + (hus.spa || 1500) + " L";
+            aktuelM3Mængde = (hus.spa > 100) ? (hus.spa / 1000) : hus.spa;
+        } else if (o.type === "Lindetpakker") {
             let pPris = (o.lindetAntal || 0) * 150;
             document.getElementById('m-stoerrelse-visning').innerText = `Udbringning + ${o.lindetAntal || 0} stk. pakker (${150 + pPris} kr.)`;
         } else {
@@ -719,9 +728,14 @@
             document.getElementById('m-stoerrelse-visning').innerText = pBeskrivelse;
         }
         
-        // Håndter synlighed af de rigtige moduler baseret på type
-        document.getElementById('kemi-sektion').style.display = (o.type === "Poolkontrol" || o.type === "Spakontrol") ? 'block' : 'none';
-        document.getElementById('m-adhoc-arbejdsrapport-felt').style.display = (o.type === "Ad-hoc") ? 'block' : 'none';
+        // Styring af synlige sektioner (Kun de 2 Poolkontroller får kemiberegner)
+        let hasKemi = (o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning");
+        document.getElementById('kemi-sektion').style.display = hasKemi ? 'block' : 'none';
+        
+        // De 3 spakontroller og ad-hoc får adgang til internt notefelt
+        let hasInternNote = (o.type === "Ad-hoc" || o.type.startsWith("Spakontrol"));
+        document.getElementById('m-adhoc-arbejdsrapport-felt').style.display = hasInternNote ? 'block' : 'none';
+        
         document.getElementById('lindet-afkryds-sektion').style.display = (o.type === "Lindetpakker") ? 'block' : 'none';
 
         if(o.type === "Lindetpakker") {
@@ -799,11 +813,15 @@
         
         let minutterBrugt = o.startet ? Math.round((nu - o.startet) / 60000) : 1; if(minutterBrugt < 1) minutterBrugt = 1;
         
-        let basisPris = 0; let prisLabel = "";
+        let basisPris = 0; let prisLabel = o.type;
         let pakkeLinjeSms = "";
         
-        if(o.type === "Poolkontrol") { basisPris = 400; prisLabel = "Poolkontrol"; }
-        else if(o.type === "Spakontrol") { basisPris = 300; prisLabel = "Spakontrol"; }
+        // Prisstyring for de nye typer
+        if(o.type === "Poolkontrol") { basisPris = 400; }
+        else if(o.type === "Poolkontrol + Bundsugning") { basisPris = 600; }
+        else if(o.type === "Spakontrol") { basisPris = 300; }
+        else if(o.type === "Spakontrol + Skift af vand") { basisPris = 600; }
+        else if(o.type === "Spakontrol + Pipecleaner") { basisPris = 1000; }
         else if(o.type === "Lindetpakker") {
             basisPris = 150; prisLabel = "Udbringningsgebyr";
             let pakkePrisTotal = (o.lindetAntal || 0) * 150;
@@ -844,9 +862,12 @@
             } else if(o.type === "Lindetpakker") {
                 smsTekst += `Jeg har d. ${smsDato} leveret Lindetpakker på ${hus.adresse}.\n\n`;
             } else {
-                let facilitetNavn = o.type === "Spakontrol" ? "Spaen" : "Poolen";
                 smsTekst += `Jeg har d. ${smsDato} udført ${o.type} på ${hus.adresse}.\n\n`;
-                smsTekst += `${facilitetNavn} er nu klar til de nye gæster.\n\n`;
+                if(o.type.startsWith("Pool")) {
+                    smsTekst += `Poolen er nu klar til de nye gæster.\n\n`;
+                } else {
+                    smsTekst += `Spaen er nu klar til de nye gæster.\n\n`;
+                }
             }
             
             if(smsNoteBruger) smsTekst += `${smsNoteBruger}\n\n`;
@@ -874,8 +895,8 @@
         
         let indhold = `<strong>Hus:</strong> ${h.adresse}<br><strong>Dato:</strong> ${h.dato || '-'}<br><strong>Type:</strong> ${tLabel}<br><hr style="border-color:#444;">`;
         
-        if(h.type === "Ad-hoc" && h.internRapport) {
-            indhold += `<strong>🛠️ Intern arbejdsrapport:</strong><br><span style="color:#60a5fa;">"${h.internRapport}"</span><hr style="border-color:#444;">`;
+        if((h.type === "Ad-hoc" || h.type.startsWith("Spakontrol")) && h.internRapport) {
+            indhold += `<strong>🛠️ Internt notefelt / Rapport:</strong><br><span style="color:#60a5fa;">"${h.internRapport}"</span><hr style="border-color:#444;">`;
         }
         if(h.noteTilSms) {
             indhold += `<strong>✉️ Note sendt til ejer:</strong><br><span style="color:#facc15;">"${h.noteTilSms}"</span><hr style="border-color:#444;">`;
@@ -896,12 +917,24 @@
         document.getElementById('historik-detaljer-indhold').innerHTML = indhold;
         
         let ramme = document.getElementById('historik-betalings-knap-ramme');
-        ramme.innerHTML = !h.betalt ? `<button onclick="markerSomBetalt(${h._idTid}, true)" style="background:#16a34a;">💵 Markér som BETALT</button>` : `<button onclick="markerSomBetalt(${h._idTid}, false)" style="background:#dc2626;">⚠️ Sæt til IKKE BETALT</button>`;
+        ramme.innerHTML = !h.betalt ? `<button onclick="markerSomBetalt(${h._idTid}, true)" style="background:#16a34a;">💵 Markér som BETALT</button>` : `<button onclick="markerSomBetalt(${h._idTid}, false)" style="background:#grey;">⚠️ Sæt til IKKE BETALT</button>`;
+        
+        // Slet-knap i historikken, som synkroniserer direkte med regnskabet ved godkendelse
+        ramme.innerHTML += `<button onclick="sletFraHistorik(${h._idTid})" class="btn-slet" style="margin-top:15px; font-size:13px; padding:8px;">❌ Slet opgave permanent fra historik</button>`;
     }
 
     function markerSomBetalt(idTid, nyStatus) {
         let h = historik.find(item => item._idTid === idTid);
         if(h) { h.betalt = nyStatus; gemAltTilHukommelse(); document.getElementById('historik-modal').style.display = 'none'; bygHistorik(); }
+    }
+    
+    function sletFraHistorik(idTid) {
+        if(confirm("Vil du slette denne afsluttede opgave permanent fra historikken? Beløbet vil også forsvinde fra regnskabet.")) {
+            historik = historik.filter(item => item._idTid !== idTid);
+            gemAltTilHukommelse();
+            document.getElementById('historik-modal').style.display = 'none';
+            bygHistorik();
+        }
     }
     
     function beregnKemi() {
@@ -934,10 +967,12 @@
 
     function lukOpgaveModal() { document.getElementById('opgave-modal').style.display = 'none'; bygOpgaveliste(); }
     function sletOpgave(id) { if(confirm("Vil du slette denne opgave?")) { opgaver = opgaver.filter(o => o.id !== id); gemAltTilHukommelse(); bygOpgaveliste(); } }
+    
     function aabenKortNavigation() {
         let adr = document.getElementById('m-adresse').innerText;
-        window.open(`https://maps.google.com/?q=${encodeURIComponent(adr)}`, '_blank');
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}`, '_blank');
     }
+    
     function haandterSmsNoteInput() {
         let o = opgaver.find(item => item.id === aktivOpgaveId);
         if(o) { o.smsNoteTilEjer = document.getElementById('m-sms-note').value; gemAltTilHukommelse(); }

@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v49</title>
+    <title>Pool Service App v50</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; padding-bottom: 120px; margin: 0; }
@@ -13,6 +13,11 @@
         .btn-nav { background: #374151; color: #d1d5db; border: none; padding: 10px 8px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; max-width: 100px; text-align: center; }
         .btn-nav.active { background: #2563eb; color: white; }
         .card { background: #2a2a2a; border: 1px solid #444; padding: 12px; margin: 10px 0; border-radius: 8px; cursor: pointer; text-align: left; position: relative; }
+        
+        /* VISUELLE KANTER BASERET PÅ TIDSKRAV */
+        .card.opg-i-dag { border: 2px solid #16a34a !important; box-shadow: 0 0 5px rgba(22,163,74,0.3); }
+        .card.opg-overskredet { border: 2px solid #dc2626 !important; box-shadow: 0 0 5px rgba(220,38,38,0.3); }
+
         .card-actions { position: absolute; right: 10px; top: 12px; display: flex; gap: 10px; z-index: 10; }
         .action-btn { background: none; border: none; font-size: 16px; cursor: pointer; width: auto; margin: 0; padding: 2px; }
         .form-group { margin-bottom: 12px; text-align: left; }
@@ -56,6 +61,9 @@
         .til-gode-item { font-size: 13px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px dashed #444; display: flex; justify-content: space-between; }
         .kvittering-mini-card { background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 
+        /* KEMI HISTORIK POPUP BOX */
+        .kemi-historik-boks { background: #111; border: 1px solid #444; padding: 10px; border-radius: 6px; margin: 10px 0; display: none; font-size: 12px; line-height: 1.5; }
+
         /* FAST APP LOGO I BUNDEN */
         .bund-logo-container { position: fixed; bottom: 0; left: 0; right: 0; background: #121212; padding: 15px 0; display: flex; justify-content: center; z-index: 80; pointer-events: none; }
         .poolmand-logo-kort { background-color: #115d75; width: 180px; height: 95px; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); text-align: center; }
@@ -80,7 +88,17 @@
         </div>
         <div id="liste-beholder"></div>
         <button onclick="aabenOpretOpgaveSide()">➕ Opret Ny Opgave</button>
-        <button onclick="haardNulstilApp()" class="btn-slet" style="margin-top: 40px; font-size: 12px; padding: 8px;">⚠️ Nulstil app-data ved fejl</button>
+        
+        <div style="margin-top: 35px; border-top: 1px dashed #444; padding-top: 15px;">
+            <span style="font-size: 12px; color:#9ca3af; display:block; margin-bottom: 5px; text-align:center;">🔒 Sikkerhedskopiering (Datasikkerhed)</span>
+            <div class="grid-2">
+                <button onclick="eksporterSikkerhedskopi()" style="background:#0284c7; font-size:12px; padding:8px; margin:0;">💾 Tag Backup</button>
+                <button onclick="document.getElementById('import-fil-input').click()" style="background:#4b5563; font-size:12px; padding:8px; margin:0;">📂 Gendan Backup</button>
+            </div>
+            <input type="file" id="import-fil-input" accept=".json" onchange="importerSikkerhedskopi(event)" style="display:none;">
+        </div>
+
+        <button onclick="haardNulstilApp()" class="btn-slet" style="margin-top: 25px; font-size: 11px; padding: 6px;">⚠️ Nulstil app-data ved fejl</button>
     </div>
 
     <div id="side-kartotek" class="sektion">
@@ -201,6 +219,8 @@
         <div class="form-group" id="felt-pool-m3" style="display:none;"><label>Pool størrelse (m³)</label><input id="hus-pool" type="number" value="27"></div>
         <div class="form-group" id="felt-spa-liter" style="display:none;"><label>Spa størrelse (Liter)</label><input id="hus-spa" type="number" value="1500"></div>
         
+        <button id="genvej-opret-opg-btn" onclick="genvejHusTilOpgave()" style="background:#2563eb; display:none; margin-bottom:8px;">➕ Opret Opgave</button>
+
         <button onclick="gemNytHus()" style="background:#16a34a;" id="btn-gem-hus">Gem Kunde</button>
         <button onclick="visSide('side-kartotek')" class="btn-annuller">Annuller</button>
     </div>
@@ -220,12 +240,17 @@
         <div id="m-noter-ramme" style="margin-bottom:10px;"></div>
 
         <div class="info-box">
+            <p style="margin:2px 0;">👤 Ejer: <strong id="m-ejer-navn" style="color:white;">-</strong></p>
             <p style="margin:2px 0;">📍 <span id="m-adresse"></span></p>
             <p style="margin:2px 0;">📅 Dato: <span id="m-dato-visning" style="color:#a3a3a3;"></span></p>
-            <p style="margin:2px 0;">🔑 Nøglekode: <strong id="m-kode" style="color:#facc15;"></strong> | Tlf: <span id="m-telefon-visning" style="color:#a3a3a3;">-</span></p>
+            <p style="margin:2px 0;">📞 Tlf: <a id="m-telefon-link" href="#" style="color:#38bdf8; font-weight:bold; text-decoration:underline;">-</a></p>
+            <p style="margin:2px 0;">🔑 Kode: <strong id="m-kode" style="color:#facc15;">-</strong> <span id="m-nogle-placering" style="color:#cbd5e1; font-size:12px; margin-left:5px;"></span></p>
             <p style="margin:2px 0; color:#38bdf8; font-weight:bold;" id="m-stoerrelse-visning">-</p>
             <p id="m-status" style="margin:5px 0 0 0;font-style:italic;color:#a3a3a3; font-size:12px;"></p>
         </div>
+
+        <button onclick="toggleVisKemiHistorik()" style="background:#4b5563; padding:6px 10px; font-size:12px; margin-bottom:10px; margin-top:0;">📊 Kemi Historik</button>
+        <div id="m-kemi-historik-udrul" class="kemi-historik-boks"></div>
         
         <div id="kemi-sektion" style="display:none; margin-bottom:15px;">
             <div class="grid-2">
@@ -349,18 +374,16 @@
         if(fundetPnr) document.getElementById('hus-postnr').value = fundetPnr;
     }
     
-    // FORBEDRET GPS OVERVÅGNING DER OPDATERER PRECISEDISTANCER LIVE
     function startGpsOvervaagning() {
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(pos => {
                 brugerLat = pos.coords.latitude; 
                 brugerLng = pos.coords.longitude; 
-                // Hvis vi står på opgavesiden, genopbygger vi listen med det samme for at vise korrekte afstande
                 if(document.getElementById('side-opgaver').style.display === 'block') { 
                     bygOpgaveliste(); 
                 }
             }, err => {
-                console.log("GPS Fejl eller manglende tilladelse", err);
+                console.log("GPS Fejl", err);
             }, {
                 enableHighAccuracy: true,
                 timeout: 5000,
@@ -371,10 +394,9 @@
 
     function estimerKoordinater(postnr, adresse) { 
         let p = parseInt(postnr);
-        // Standard Marielyst/Væggerløse baseret på postnummeret
         if (p === 4873) {
             if (adresse && (adresse.toLowerCase().includes("linned") || adresse.toLowerCase().includes("linnet"))) {
-                return {lat: 54.6941, lng: 11.9562}; // Specifik forbedring til Linnedvænget-området i Marielyst
+                return {lat: 54.6941, lng: 11.9562}; 
             }
             return {lat: 54.6983, lng: 11.9272};
         }
@@ -405,13 +427,9 @@
         if(sideId === 'side-regnskab') { document.getElementById('btn-nav-reg').classList.add('active'); opdaterRegnskabstal(); }
     }
 
-    // RESOLVED: Sorteringen slår nu rigtigt igennem og kalder render-metoden korrekt bagefter
     function toggleDatoSortering() {
-        if (opgaveSortering === 'dato-asc') {
-            opgaveSortering = 'dato-desc';
-        } else {
-            opgaveSortering = 'dato-asc';
-        }
+        if (opgaveSortering === 'dato-asc') { opgaveSortering = 'dato-desc'; } 
+        else { opgaveSortering = 'dato-asc'; }
         bygOpgaveliste();
     }
 
@@ -432,7 +450,7 @@
         let b = document.getElementById('liste-beholder'); if(!b) return; b.innerHTML = '';
         if(opgaver.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Ingen aktive opgaver.</p>'; return; }
         
-        let listeKopi = JSON.parse(JSON.stringify(opgaver)); // Dyb kopi for at undgå mutationsfejl under sortering
+        let listeKopi = JSON.parse(JSON.stringify(opgaver)); 
         
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
@@ -442,7 +460,6 @@
             } else { o._afstand = null; }
         });
 
-        // Sorteringslogik der faktisk reagerer på knapperne
         if(opgaveSortering === 'dato-asc') { 
             listeKopi.sort((x,y) => new Date(x.dato) - new Date(y.dato)); 
         } else if(opgaveSortering === 'dato-desc') { 
@@ -455,7 +472,6 @@
             }); 
         }
 
-        // Visuel opdatering af knapperne i toppen
         let datoBtn = document.getElementById('sort-opg-dato-toggle');
         let afstBtn = document.getElementById('sort-opg-afstand');
         
@@ -474,6 +490,9 @@
             }
         }
 
+        // HENT IDAGS DATO FOR SAMMENLIGNING AF KANTER (2026 FORMAT)
+        let iDagStreng = new Date().toISOString().split('T')[0];
+
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
             let adresseVisning = hus ? hus.adresse : "Ukendt hus";
@@ -482,8 +501,16 @@
             let afstStr = (o._afstand !== null && o._afstand !== undefined) ? `📍 ${o._afstand.toFixed(1)} km` : `📍 -- km`;
             let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
             
+            // LOGIK FOR VISUELLE FARVE-KANTER
+            let kantKlasse = "";
+            if(o.dato === iDagStreng) {
+                kantKlasse = "opg-i-dag"; // Grøn kant for i dag
+            } else if(o.dato < iDagStreng) {
+                kantKlasse = "opg-overskredet"; // Rød kant hvis overskredet
+            }
+
             b.innerHTML += `
-                <div class="card" onclick="aabenOpgaveModal(${o.id})">
+                <div class="card ${kantKlasse}" onclick="aabenOpgaveModal(${o.id})">
                     <div class="card-actions">
                         <button class="action-btn" onclick="event.stopPropagation(); redigerOpgave(${o.id})">✏️</button>
                         <button class="action-btn" onclick="event.stopPropagation(); sletOpgave(${o.id})">❌</button>
@@ -747,6 +774,7 @@
     function aabenOpretHusSide() {
         document.getElementById('hus-id-skjult').value = "";
         document.getElementById('hus-skema-titel').innerText = "🏠 Tilføj Kunde / Hus";
+        document.getElementById('genvej-opret-opg-btn').style.display = 'none'; // Skjul genvej ved ny oprettelse
         document.getElementById('hus-adresse').value = ""; document.getElementById('hus-by').value = "";
         document.getElementById('hus-postnr').value = ""; document.getElementById('hus-ejer-navn').value = "";
         document.getElementById('hus-telefon').value = ""; document.getElementById('hus-ejer2-navn').value = "";
@@ -761,6 +789,11 @@
         let h = kartotek.find(item => item.id === id); if(!h) return;
         document.getElementById('hus-id-skjult').value = h.id;
         document.getElementById('hus-skema-titel').innerText = "✏️ Rediger Kunde";
+        
+        // VIS GENVEJSKNAP TIL AT OPRETTE OPGAVE DIREKTE PÅ KUNDEN
+        let gBtn = document.getElementById('genvej-opret-opg-btn');
+        if(gBtn) gBtn.style.display = 'block';
+
         document.getElementById('hus-adresse').value = h.adresse; document.getElementById('hus-by').value = h.by || "";
         document.getElementById('hus-postnr').value = h.postnr || ""; document.getElementById('hus-ejer-navn').value = h.ejerNavn || "";
         document.getElementById('hus-telefon').value = h.telefon || ""; document.getElementById('hus-ejer2-navn').value = h.ejer2Navn || "";
@@ -769,6 +802,14 @@
         document.getElementById('hus-has-pool').checked = !!h.hasPool; document.getElementById('hus-has-spa').checked = !!h.hasSpa;
         document.getElementById('hus-pool').value = h.pool || 0; document.getElementById('hus-spa').value = h.spa || 0;
         styreHusStaerrelseFelter(); visSide('side-opret-hus');
+    }
+
+    // HURTIG OPRET OPGAVE FRA KUNDE-KARTOTEK GENVEJ
+    function genvejHusTilOpgave() {
+        let hId = document.getElementById('hus-id-skjult').value; if(!hId) return;
+        aabenOpretOpgaveSide();
+        document.getElementById('opret-opg-hus-select').value = hId;
+        haandterHusValgIOpgave();
     }
 
     function sletHus(id) {
@@ -794,16 +835,31 @@
         document.getElementById('m-adhoc-udfoert-tekst').value = o.udfoertRapport || "";
         document.getElementById('m-sms-note').value = o.smsNoteTilEjer || "";
 
+        // Skjul kemihistorik-boks som standard hver gang modal åbnes
+        document.getElementById('m-kemi-historik-udrul').style.display = 'none';
+
         let nRamme = document.getElementById('m-noter-ramme'); nRamme.innerHTML = "";
         if(hus.note) nRamme.innerHTML += `<div style="background:rgba(56,189,248,0.15); border-left:4px solid #38bdf8; padding:8px; margin-bottom:5px; font-size:13px; color:white;"><strong>🏠 Fast note:</strong> ${hus.note}</div>`;
         if(o.note) nRamme.innerHTML += `<div style="background:rgba(250,204,21,0.15); border-left:4px solid #facc15; padding:8px; font-size:13px; color:white;"><strong>📝 Opgave note:</strong> ${o.note}</div>`;
 
+        // OPGRADERET OPGAVE-INFO VINDUE MED EJER 1 NAVN, KLIKBART CODES & NUMRE OG PLACERING
         document.getElementById('m-navn').innerText = hus.adresse;
+        document.getElementById('m-ejer-navn').innerText = hus.ejerNavn || "-";
         document.getElementById('m-type').innerText = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel}` : (o.type === "Lindetpakker" ? "Udbringning af Linnedpakker" : o.type);
         document.getElementById('m-adresse').innerText = hus.adresse + (hus.by ? ", " + hus.by : "");
         document.getElementById('m-kode').innerText = hus.kode || "-";
+        document.getElementById('m-nogle-placering').innerText = hus.placering ? `(${hus.placering})` : "";
         document.getElementById('m-dato-visning').innerText = o.dato || "-";
-        document.getElementById('m-telefon-visning').innerText = hus.telefon || "-";
+        
+        // GØR NUMMERET KLIKBART
+        let tLink = document.getElementById('m-telefon-link');
+        if(hus.telefon) {
+            tLink.innerText = hus.telefon;
+            tLink.href = "tel:" + hus.telefon.replace(/\s+/g, '');
+        } else {
+            tLink.innerText = "-";
+            tLink.href = "#";
+        }
         
         if (o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning") {
             document.getElementById('m-stoerrelse-visning').innerText = "Pool: " + (hus.pool || 27) + " m³";
@@ -819,9 +875,26 @@
             document.getElementById('m-stoerrelse-visning').innerText = pBeskrivelse;
         }
         
-        let hasKemi = (o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning");
+        let hasKemi = (o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning" || o.type.startsWith("Spakontrol"));
         document.getElementById('kemi-sektion').style.display = hasKemi ? 'block' : 'none';
         
+        // KEMI-HUKOMMELSE LOGIK: Hent automatisk målingerne ind fra forrige besøg på netop denne adresse
+        if(hasKemi) {
+            let sidsteBesøg = [...historik]
+                .reverse()
+                .find(h => h.adresse === hus.adresse && h.kemiHistorik);
+                
+            if(sidsteBesøg && sidsteBesøg.kemiHistorik) {
+                document.getElementById('kemi-maalt-klor').value = sidsteBesøg.kemiHistorik.maaltKlor || "1.0";
+                document.getElementById('kemi-maalt-ph').value = sidsteBesøg.kemiHistorik.maaltPh || "7.0";
+            } else {
+                // Hvis intet historisk data findes, sæt app standard
+                document.getElementById('kemi-maalt-klor').value = "1.0";
+                document.getElementById('kemi-maalt-ph').value = "7.0";
+            }
+            beregnKemi(); // Genberegn med det samme baseret på indlæst data
+        }
+
         let hasInternNote = (o.type === "Ad-hoc" || o.type.startsWith("Spakontrol"));
         document.getElementById('m-adhoc-arbejdsrapport-felt').style.display = hasInternNote ? 'block' : 'none';
         
@@ -851,6 +924,39 @@
             document.getElementById('m-status').innerText = "Status: Klar";
         }
         document.getElementById('opgave-modal').style.display = 'flex';
+    }
+
+    // KEMI HISTORIK OVER DE SIDSTE 5 BESØG
+    function toggleVisKemiHistorik() {
+        let boks = document.getElementById('m-kemi-historik-udrul');
+        if(boks.style.display === 'block') {
+            boks.style.display = 'none';
+            return;
+        }
+
+        let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
+        let hus = kartotek.find(h => h.id === o.kartotekId); if(!hus) return;
+
+        // Filtrer historikken så vi kun ser de seneste 5 kemimålinger for dette hus
+        let alleHustiltag = historik.filter(h => h.adresse === hus.adresse && h.kemiHistorik);
+        let senesteFem = alleHustiltag.slice(-5).reverse();
+
+        if(senesteFem.length === 0) {
+            boks.innerHTML = "<span style='color:#9ca3af;'>Ingen gemte kemimålinger fundet på dette hus endnu.</span>";
+        } else {
+            let htmlStr = "<strong style='color:#38bdf8; display:block; border-bottom:1px solid #333; padding-bottom:3px; margin-bottom:5px;'>Seneste 5 kemi-målinger:</strong>";
+            senesteFem.forEach(h => {
+                let kh = h.kemiHistorik;
+                htmlStr += `
+                    <div style="margin-bottom:6px; padding-bottom:6px; border-bottom:1px dashed #222;">
+                        <span style="color:#facc15;">📅 ${h.dato || '-'}</span> - <strong>${h.type}</strong><br>
+                        🧪 Klor: <span style="color:#4ade80;">${kh.maaltKlor} mg/l</span> | pH: <span style="color:#4ade80;">${kh.maaltPh}</span><br>
+                        💊 Dosering: Daytabs: ${kh.calcDaytabs || 0}stk • Boost: ${kh.calcBoost || 0}ml • pH-Minus: ${kh.calcMinus || 0}ml • pH-Plus: ${kh.calcPlus || 0}ml
+                    </div>`;
+            });
+            boks.innerHTML = htmlStr;
+        }
+        boks.style.display = 'block';
     }
 
     function haandterLindetAfkrydsning() {
@@ -938,7 +1044,7 @@
         let smsNoteBruger = document.getElementById('m-sms-note').value.trim();
 
         let gemKemiData = null;
-        if(o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning") {
+        if(o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning" || o.type.startsWith("Spakontrol")) {
             gemKemiData = {
                 maaltKlor: document.getElementById('kemi-maalt-klor').value,
                 oensketKlor: document.getElementById('kemi-oensket-klor').value,
@@ -1016,7 +1122,7 @@
             indhold += `<strong>🛠️ Internt notefelt / Rapport:</strong><br><span style="color:#60a5fa;">"${h.internRapport}"</span><hr style="border-color:#444;">`;
         }
         if(h.noteTilSms) {
-            indhold += `<strong>✉️ Note sendt til ejer:</strong><br><span style="color:#facc15;">"${h.noteTilSms}"</span><hr style="border-color:#444;">`;
+            indhold += `<strong>✉️ Note sendt to ejer:</strong><br><span style="color:#facc15;">"${h.noteTilSms}"</span><hr style="border-color:#444;">`;
         }
         
         indhold += `<strong>💰 Regning:</strong><br>• ${h.prisLabel}: ${h.basisPris} kr.<br>`;
@@ -1124,7 +1230,7 @@
     
     function aabenKortNavigation() {
         let adr = document.getElementById('m-adresse').innerText;
-        window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(adr)}&travelmode=driving`, '_blank');
+        window.open(`https://maps.google.com/?q=${encodeURIComponent(adr)}&travelmode=driving`, '_blank');
     }
 
     function beregnKemi() {
@@ -1152,6 +1258,55 @@
         document.getElementById('res-phplus').innerText = phplus;
     }
 
+    // AUTOMATISK LØSNING B SIKKERHEDSKOPI (DOWNLOAD .JSON FIL)
+    function eksporterSikkerhedskopi() {
+        let samletEksportData = {
+            kartotek: kartotek,
+            opgaver: opgaver,
+            historik: historik,
+            version: 50,
+            eksporteretDato: new Date().toISOString()
+        };
+        
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(samletEksportData));
+        let downloadAnker = document.createElement('a');
+        
+        let d = new Date();
+        let datoFormat = `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`;
+        
+        downloadAnker.setAttribute("href", dataStr);
+        downloadAnker.setAttribute("download", `din_poolmand_backup_${datoFormat}.json`);
+        document.body.appendChild(downloadAnker);
+        downloadAnker.click();
+        downloadAnker.remove();
+    }
+
+    // IMPORTER / GENDAN LOKAL SIKKERHEDSKOPI FIL
+    function importerSikkerhedskopi(event) {
+        let fil = event.target.files[0]; if (!fil) return;
+        let r = new FileReader();
+        r.onload = function(e) {
+            try {
+                let indlaestData = JSON.parse(e.target.result);
+                if (indlaestData.kartotek && indlaestData.opgaver && indlaestData.historik) {
+                    if (confirm("Vil du overskrive appens nuværende data med denne backup-fil?")) {
+                        kartotek = indlaestData.kartotek;
+                        opgaver = indlaestData.opgaver;
+                        historik = indlaestData.historik;
+                        gemAltTilHukommelse();
+                        bygOpgaveliste();
+                        alert("Backup indlæst med succes! Appen er gendannet.");
+                    }
+                } else {
+                    alert("Fejl: Filen indeholder ikke gyldig app-data.");
+                }
+            } catch (err) {
+                alert("Kunne ikke læse filen. Sørg for det er en rigtig .json backup-fil.");
+            }
+        };
+        r.readAsText(fil);
+    }
+
     function lukOpgaveModal() { document.getElementById('opgave-modal').style.display = 'none'; bygOpgaveliste(); }
     function sletOpgave(id) { if(confirm("Vil du slette denne opgave?")) { opgaver = opgaver.filter(o => o.id !== id); gemAltTilHukommelse(); bygOpgaveliste(); } }
     
@@ -1164,7 +1319,7 @@
         if(o) { o.udfoertRapport = document.getElementById('m-adhoc-udfoert-tekst').value; gemAltTilHukommelse(); }
     }
     function haardNulstilApp() {
-        if(confirm("BEMÆRK: This sletter alt data i appen permanent! Er du sikker?")) {
+        if(confirm("BEMÆRK: Dette sletter alt data i appen permanent! Er du sikker?")) {
             localStorage.clear(); window.location.reload();
         }
     }

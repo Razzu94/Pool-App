@@ -116,7 +116,7 @@
                 <div class="form-group"><label>Ønsket klor</label><input id="kemi-oensket-klor" type="number" step="0.1" value="6.0" oninput="beregnKemi()"></div>
             </div>
             <div class="grid-2">
-                <div class="form-group"><label>Målt pH</label><input id="kemi-maalt-ph" type="number" step="0.1" value="7.4" oninput="beregnKemi()"></div>
+                <div class="form-group"><label>Målt pH</label><input id="kemi-maalt-ph" type="number" step="0.1" value="7.8" oninput="beregnKemi()"></div>
                 <div class="form-group"><label>Ønsket pH</label><input id="kemi-oensket-ph" type="number" step="0.1" value="7.0" oninput="beregnKemi()"></div>
             </div>
             
@@ -327,9 +327,9 @@
         
         if(o.type === "Poolkontrol" || o.type === "Spakontrol") {
             document.getElementById('kemi-sektion').style.display = 'block';
-            document.getElementById('kemi-maalt-klor').value = "2.0";
+            document.getElementById('kemi-maalt-klor').value = "1.0";
             document.getElementById('kemi-oensket-klor').value = "6.0";
-            document.getElementById('kemi-maalt-ph').value = "6.8";
+            document.getElementById('kemi-maalt-ph').value = "7.0";
             document.getElementById('kemi-oensket-ph').value = "7.0";
             beregnKemi();
         } else {
@@ -366,6 +366,7 @@
         let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt" };
         let nu = new Date().getTime();
         
+        // Præcis tidsberegning (Minimum 1 minut hvis det tager sekunder)
         let minutterBrugt = o.startet ? Math.round((nu - o.startet) / 60000) : 1;
         if(minutterBrugt < 1) minutterBrugt = 1; 
         
@@ -420,52 +421,36 @@
         let m3 = aktuelM3Mængde;
         let boost = 0; let daytabs = 0; let antiklor = 0; let phminus = 0; let phplus = 0;
 
-        // Klorberegning (VL Consult)
+        // 1. KLOR BEREGNING (Præcis Excel-standard)
         if (mKlor < oKlor) {
             let mangel = oKlor - mKlor;
-            boost = m3 * mangel * 1.35; 
-            daytabs = (m3 * mangel) / 4.764; 
+            boost = m3 * mangel * 1.35; // F.eks. 27 * 5 * 1.35 = 182.25 ml
+            daytabs = (m3 * mangel) / 4.82; // F.eks. (27 * 5) / 4.82 = 28 stk.
         } else if (mKlor > oKlor) {
-            antiklor = (m3 * (mKlor - oKlor)) / 1.2;
+            let overskud = mKlor - oKlor;
+            antiklor = (m3 * overskud) / 1.2;
         }
 
-        // 1. Beregn det rene basale pH-behov før klor-effekt
-        let rentPhBehovMinus = 0;
-        let rentPhBehovPlus = 0;
-        
+        // 2. BASIS pH BEREGNING (Før klor-kompensation)
         if (mPh > oPh) {
-            rentPhBehovMinus = m3 * (mPh - oPh) * 35;
+            phminus = m3 * (mPh - oPh) * 35; 
         } else if (mPh < oPh) {
-            rentPhBehovPlus = m3 * (oPh - mPh) * 35;
+            phplus = m3 * (oPh - mPh) * 35;
         }
 
-        // 2. Beregn klor-kompensation (hvor meget klor løfter pH bagefter)
-        let klorEffektStigningML = 0;
-        if (daytabs > 0 || boost > 0) {
-            klorEffektStigningML = m3 * 10.5; // f.eks. 27 * 10.5 = 283.5 ml forskydning mod minus
+        // 3. FULD KLOR -> pH-MINUS KOMPENSATION (Den præcise Excel-faktor fundet via dine screenshots)
+        // Hver 1 ml Boost-mængde øger behovet for pH-Minus med præcis 1.29617 ml!
+        if (boost > 0) {
+            let pHKompensation = boost * 1.29617; 
+            phminus += pHKompensation;
         }
 
-        // 3. Kombiner værdierne i et samlet regnskab, så de ALDRIG modarbejder hinanden
-        // Klor-stigningen trækker altid i retning mod pH-Minus.
-        let samletRegnskab = rentPhBehovMinus - rentPhBehovPlus + klorEffektStigningML;
-
-        if (samletRegnskab > 0) {
-            phminus = samletRegnskab;
-            phplus = 0;
-        } else if (samletRegnskab < 0) {
-            phminus = 0;
-            phplus = Math.abs(samletRegnskab);
-        } else {
-            phminus = 0;
-            phplus = 0;
-        }
-
-        // Formatering af output helt synkront med dine Excel screenshots
-        document.getElementById('res-boost').innerText = boost % 1 === 0 ? boost : boost.toFixed(1);
+        // Formatering til visning (Præcis afrunding ligesom i Excel)
+        document.getElementById('res-boost').innerText = boost === 0 ? "0" : boost.toFixed(1);
         document.getElementById('res-daytabs').innerText = Math.max(0, Math.round(daytabs));
-        document.getElementById('res-antiklor').innerText = Math.round(antiklor);
-        document.getElementById('res-phminus').innerText = phminus % 1 === 0 ? phminus : phminus.toFixed(1);
-        document.getElementById('res-phplus').innerText = phplus % 1 === 0 ? phplus : phplus.toFixed(1);
+        document.getElementById('res-antiklor').innerText = antiklor === 0 ? "0" : antiklor.toFixed(1);
+        document.getElementById('res-phminus').innerText = phminus === 0 ? "0" : phminus.toFixed(1);
+        document.getElementById('res-phplus').innerText = phplus === 0 ? "0" : phplus.toFixed(1);
     }
 
     function visHistorikDetaljer(index) {
@@ -499,7 +484,7 @@
     function aabenKortNavigation() {
         let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
         let hus = kartotek.find(h => h.id === o.kartotekId);
-        if(hus) window.open("http://maps.google.com/?q=" + encodeURIComponent(hus.adresse), '_blank');
+        if(hus) window.open("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(hus.adresse), '_blank');
     }
 
     function haardNulstilApp() { localStorage.clear(); initialiserData(); visSide('side-opgaver'); }

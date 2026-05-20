@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v48</title>
+    <title>Pool Service App v49</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; padding-bottom: 120px; margin: 0; }
@@ -94,7 +94,7 @@
     </div>
 
     <div id="side-historik" class="sektion">
-        <h2>📜 Udførte Opgaver (Historik)</h2>
+        <h2>📜 Historik</h2>
         <div class="sorterings-cluster">
             <button id="sort-his-nyest" onclick="setHistorikSortering('nyest')" class="sort-btn active">⏱️ Nyeste først</button>
             <button id="sort-his-aeldst" onclick="setHistorikSortering('aeldst')" class="sort-btn">⏱️ Ældste først</button>
@@ -104,12 +104,12 @@
     </div>
 
     <div id="side-regnskab" class="sektion">
-        <h2>📊 Forretningsregnskab</h2>
+        <h2>📊 Regnskab</h2>
         
         <div id="moms-alarm-ramme" class="moms-bjaelke moms-groen">0 kr.</div>
         <div id="moms-advarsel-label" class="moms-advarsel-tekst" style="display:none;">⚠️ Momsadvarsel</div>
         
-        <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">💰 Faktisk Indtjening (Kun betalte)</h3>
+        <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">💰 Indtjening</h3>
         <div class="regnskab-box">
             <div class="regnskab-linje" style="font-weight:bold; color:white;"><span>Total indtjening:</span><span id="reg-total-indtjening">0 kr.</span></div>
             <div class="regnskab-linje"><span>🏊‍♂️ Poolkontroller i alt:</span><span id="reg-pool-indtjening">0 kr.</span></div>
@@ -118,7 +118,7 @@
             <div class="regnskab-linje"><span>🛠️ Ad-hoc opgaver i alt:</span><span id="reg-adhoc-indtjening">0 kr.</span></div>
         </div>
 
-        <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">⏳ Udestående til gode (Ikke betalt)</h3>
+        <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">⏳ Ikke Betalt</h3>
         <div class="regnskab-box">
             <div class="regnskab-linje" style="font-weight:bold; color:#facc15; border-bottom:1px solid #444; padding-bottom:8px;"><span>Samlet til gode:</span><span id="reg-total-tilgode">0 kr.</span></div>
             <div id="reg-tilgode-liste" style="margin-top:5px; max-height:150px; overflow-y:auto;"></div>
@@ -348,20 +348,40 @@
         let fundetPnr = findPostnrFraBy(byNavn);
         if(fundetPnr) document.getElementById('hus-postnr').value = fundetPnr;
     }
+    
+    // FORBEDRET GPS OVERVÅGNING DER OPDATERER PRECISEDISTANCER LIVE
     function startGpsOvervaagning() {
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(pos => {
-                brugerLat = pos.coords.latitude; brugerLng = pos.coords.longitude; 
-                if(document.getElementById('side-opgaver').style.display === 'block') { bygOpgaveliste(); }
-            }, null, {enableHighAccuracy: true});
+                brugerLat = pos.coords.latitude; 
+                brugerLng = pos.coords.longitude; 
+                // Hvis vi står på opgavesiden, genopbygger vi listen med det samme for at vise korrekte afstande
+                if(document.getElementById('side-opgaver').style.display === 'block') { 
+                    bygOpgaveliste(); 
+                }
+            }, err => {
+                console.log("GPS Fejl eller manglende tilladelse", err);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
         }
     }
-    function estimerKoordinater(postnr) { 
+
+    function estimerKoordinater(postnr, adresse) { 
         let p = parseInt(postnr);
-        if (p === 4873) return {lat: 54.6983, lng: 11.9272};
+        // Standard Marielyst/Væggerløse baseret på postnummeret
+        if (p === 4873) {
+            if (adresse && (adresse.toLowerCase().includes("linned") || adresse.toLowerCase().includes("linnet"))) {
+                return {lat: 54.6941, lng: 11.9562}; // Specifik forbedring til Linnedvænget-området i Marielyst
+            }
+            return {lat: 54.6983, lng: 11.9272};
+        }
         if (p === 4800) return {lat: 54.7675, lng: 11.8739};
         return {lat: 54.7675, lng: 11.8739}; 
     }
+
     function beregnAfstandKm(lat1, lon1, lat2, lon2) {
         if (!lat1 || !lon1 || !lat2 || !lon2) return null;
         let R = 6371; let dLat = (lat2-lat1) * Math.PI / 180; let dLon = (lon2-lon1) * Math.PI / 180;
@@ -385,7 +405,7 @@
         if(sideId === 'side-regnskab') { document.getElementById('btn-nav-reg').classList.add('active'); opdaterRegnskabstal(); }
     }
 
-    // DYNAMISK DATO TOGGLE FUNKTION
+    // RESOLVED: Sorteringen slår nu rigtigt igennem og kalder render-metoden korrekt bagefter
     function toggleDatoSortering() {
         if (opgaveSortering === 'dato-asc') {
             opgaveSortering = 'dato-desc';
@@ -412,34 +432,46 @@
         let b = document.getElementById('liste-beholder'); if(!b) return; b.innerHTML = '';
         if(opgaver.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Ingen aktive opgaver.</p>'; return; }
         
-        let listeKopi = [...opgaver];
+        let listeKopi = JSON.parse(JSON.stringify(opgaver)); // Dyb kopi for at undgå mutationsfejl under sortering
+        
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
             if(hus) {
-                let lok = estimerKoordinater(hus.postnr);
+                let lok = estimerKoordinater(hus.postnr, hus.adresse);
                 o._afstand = (brugerLat && brugerLng) ? beregnAfstandKm(brugerLat, brugerLng, lok.lat, lok.lng) : null;
             } else { o._afstand = null; }
         });
 
-        if(opgaveSortering === 'dato-asc') { listeKopi.sort((x,y) => new Date(x.dato) - new Date(y.dato)); }
-        else if(opgaveSortering === 'dato-desc') { listeKopi.sort((x,y) => new Date(y.dato) - new Date(x.dato)); }
-        else if(opgaveSortering === 'afstand') { listeKopi.sort((x,y) => (x._afstand || 9999) - (y._afstand || 9999)); }
+        // Sorteringslogik der faktisk reagerer på knapperne
+        if(opgaveSortering === 'dato-asc') { 
+            listeKopi.sort((x,y) => new Date(x.dato) - new Date(y.dato)); 
+        } else if(opgaveSortering === 'dato-desc') { 
+            listeKopi.sort((x,y) => new Date(y.dato) - new Date(x.dato)); 
+        } else if(opgaveSortering === 'afstand') { 
+            listeKopi.sort((x,y) => {
+                let ax = (x._afstand !== null && x._afstand !== undefined) ? x._afstand : 9999;
+                let ay = (y._afstand !== null && y._afstand !== undefined) ? y._afstand : 9999;
+                return ax - ay;
+            }); 
+        }
 
-        // Opdater knap-udseende og tekst dynamisk
+        // Visuel opdatering af knapperne i toppen
         let datoBtn = document.getElementById('sort-opg-dato-toggle');
         let afstBtn = document.getElementById('sort-opg-afstand');
         
-        datoBtn.classList.remove('active');
-        afstBtn.classList.remove('active');
+        if (datoBtn && afstBtn) {
+            datoBtn.classList.remove('active');
+            afstBtn.classList.remove('active');
 
-        if (opgaveSortering === 'dato-asc') {
-            datoBtn.classList.add('active');
-            datoBtn.innerText = "📅 Dato (Nærmeste)";
-        } else if (opgaveSortering === 'dato-desc') {
-            datoBtn.classList.add('active');
-            datoBtn.innerText = "📅 Dato (Længste)";
-        } else if (opgaveSortering === 'afstand') {
-            afstBtn.classList.add('active');
+            if (opgaveSortering === 'dato-asc') {
+                datoBtn.classList.add('active');
+                datoBtn.innerText = "📅 Dato (Nærmeste)";
+            } else if (opgaveSortering === 'dato-desc') {
+                datoBtn.classList.add('active');
+                datoBtn.innerText = "📅 Dato (Længste)";
+            } else if (opgaveSortering === 'afstand') {
+                afstBtn.classList.add('active');
+            }
         }
 
         listeKopi.forEach(o => {
@@ -1090,7 +1122,6 @@
         printVindue.document.close();
     }
     
-    // OPDATERET DIREKTE LIVE NAVIGATION API
     function aabenKortNavigation() {
         let adr = document.getElementById('m-adresse').innerText;
         window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(adr)}&travelmode=driving`, '_blank');
@@ -1133,7 +1164,7 @@
         if(o) { o.udfoertRapport = document.getElementById('m-adhoc-udfoert-tekst').value; gemAltTilHukommelse(); }
     }
     function haardNulstilApp() {
-        if(confirm("BEMÆRK: Dette sletter alt data i appen permanent! Er du sikker?")) {
+        if(confirm("BEMÆRK: This sletter alt data i appen permanent! Er du sikker?")) {
             localStorage.clear(); window.location.reload();
         }
     }

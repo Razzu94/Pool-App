@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v34</title>
+    <title>Pool Service App v35</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -327,9 +327,9 @@
         
         if(o.type === "Poolkontrol" || o.type === "Spakontrol") {
             document.getElementById('kemi-sektion').style.display = 'block';
-            document.getElementById('kemi-maalt-klor').value = "0.0";
+            document.getElementById('kemi-maalt-klor').value = "2.0";
             document.getElementById('kemi-oensket-klor').value = "6.0";
-            document.getElementById('kemi-maalt-ph').value = "7.8";
+            document.getElementById('kemi-maalt-ph').value = "6.8";
             document.getElementById('kemi-oensket-ph').value = "7.0";
             beregnKemi();
         } else {
@@ -366,7 +366,6 @@
         let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt" };
         let nu = new Date().getTime();
         
-        // Tidsberegning (Runder op til min. 1 minut ved sekunder under 60)
         let minutterBrugt = o.startet ? Math.round((nu - o.startet) / 60000) : 1;
         if(minutterBrugt < 1) minutterBrugt = 1; 
         
@@ -421,34 +420,52 @@
         let m3 = aktuelM3Mængde;
         let boost = 0; let daytabs = 0; let antiklor = 0; let phminus = 0; let phplus = 0;
 
-        // Præcise VL Consult klorfaktorer tilpasset dit Excel-ark
+        // Klorberegning (VL Consult)
         if (mKlor < oKlor) {
             let mangel = oKlor - mKlor;
-            boost = m3 * mangel * 1.35; // 27 * 6 * 1.35 = 218.7 ml
-            daytabs = (m3 * mangel) / 4.764; // Giver præcis 34 stk. ved 27 m3 og 6 i mangel
+            boost = m3 * mangel * 1.35; 
+            daytabs = (m3 * mangel) / 4.764; 
         } else if (mKlor > oKlor) {
             antiklor = (m3 * (mKlor - oKlor)) / 1.2;
         }
 
-        // Basis pH-beregning
+        // 1. Beregn det rene basale pH-behov før klor-effekt
+        let rentPhBehovMinus = 0;
+        let rentPhBehovPlus = 0;
+        
         if (mPh > oPh) {
-            phminus = m3 * (mPh - oPh) * 35; // 27 * 0.8 * 35 = 756 ml
+            rentPhBehovMinus = m3 * (mPh - oPh) * 35;
         } else if (mPh < oPh) {
-            phplus = m3 * (oPh - mPh) * 35;
+            rentPhBehovPlus = m3 * (oPh - mPh) * 35;
         }
 
-        // KLOR-PH-KOMPENSATION (Helt synkroniseret med dit Excel-ark)
-        // Når der tilføjes klor, stiger pH væsentligt. For at ramme 1039,5 ml i stedet for 756 ml, 
-        // lægges klor-faktorstigningen præcist oveni:
+        // 2. Beregn klor-kompensation (hvor meget klor løfter pH bagefter)
+        let klorEffektStigningML = 0;
         if (daytabs > 0 || boost > 0) {
-            phminus += (m3 * 10.5); // Præcis kompensation fra dit Excel-arks formel (27 * 10.5 = 283.5 ml extra -> 756 + 283.5 = 1039.5 ml)
+            klorEffektStigningML = m3 * 10.5; // f.eks. 27 * 10.5 = 283.5 ml forskydning mod minus
         }
 
+        // 3. Kombiner værdierne i et samlet regnskab, så de ALDRIG modarbejder hinanden
+        // Klor-stigningen trækker altid i retning mod pH-Minus.
+        let samletRegnskab = rentPhBehovMinus - rentPhBehovPlus + klorEffektStigningML;
+
+        if (samletRegnskab > 0) {
+            phminus = samletRegnskab;
+            phplus = 0;
+        } else if (samletRegnskab < 0) {
+            phminus = 0;
+            phplus = Math.abs(samletRegnskab);
+        } else {
+            phminus = 0;
+            phplus = 0;
+        }
+
+        // Formatering af output helt synkront med dine Excel screenshots
         document.getElementById('res-boost').innerText = boost % 1 === 0 ? boost : boost.toFixed(1);
         document.getElementById('res-daytabs').innerText = Math.max(0, Math.round(daytabs));
         document.getElementById('res-antiklor').innerText = Math.round(antiklor);
         document.getElementById('res-phminus').innerText = phminus % 1 === 0 ? phminus : phminus.toFixed(1);
-        document.getElementById('res-phplus').innerText = Math.round(phplus);
+        document.getElementById('res-phplus').innerText = phplus % 1 === 0 ? phplus : phplus.toFixed(1);
     }
 
     function visHistorikDetaljer(index) {

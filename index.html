@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v40</title>
+    <title>Pool Service App v41</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -187,7 +187,7 @@
 
         <div class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444;">
             <label style="color:#facc15; font-weight:bold;">✉️ Note direkte til SMS-kvitteringen</label>
-            <textarea id="m-sms-note" rows="2" placeholder="F.eks. Jeg har støvsuget spaen / anbefaler grundig rens snart..."></textarea>
+            <textarea id="m-sms-note" rows="2" placeholder="F.eks. Jeg har støvsuget spaen..."></textarea>
         </div>
 
         <button onclick="aabenKortNavigation()" id="btn-maps" class="btn-maps">🗺️ Start Navigation</button>
@@ -217,7 +217,6 @@
     let brugerLat = null; let brugerLng = null;
     let opgaveSortering = 'dato-asc'; let kartotekSortering = 'az'; let historikSortering = 'nyest';
 
-    // Hele Danmarks Postnummer database via algoritmisk opslag
     function findByFraPostnr(postnr) {
         let p = parseInt(postnr);
         if (isNaN(p)) return "";
@@ -251,9 +250,6 @@
         if (b.includes("nysted")) return "4880";
         if (b.includes("stubbekøbing")) return "4850";
         if (b.includes("marielyst")) return "4873";
-        if (b.includes("blåvand")) return "6857";
-        if (b.includes("oksbøl")) return "6855";
-        if (b.includes("varde")) return "6800";
         return "";
     }
 
@@ -295,7 +291,7 @@
 
     function estimerKoordinater(postnr) {
         let p = parseInt(postnr);
-        if(p >= 4800 && p <= 4899) return {lat: 54.7675, lng: 11.8739}; // Falster centrum
+        if(p >= 4800 && p <= 4899) return {lat: 54.7675, lng: 11.8739};
         return {lat: 55.5, lng: 8.4};
     }
 
@@ -426,7 +422,7 @@
     }
 
     function styreHustypeFelter() {
-        let type = document.getElementById('hus-type').value;
+        let type = document.getElementById('focus-type' || 'hus-type').value;
         document.getElementById('felt-pool').style.display = (type === 'Pool') ? 'block' : 'none';
         document.getElementById('felt-spa').style.display = (type === 'Spa') ? 'block' : 'none';
     }
@@ -533,7 +529,11 @@
         document.getElementById('hus-type').value = h.type || "Pool";
         document.getElementById('hus-pool').value = h.pool || 0;
         document.getElementById('hus-spa').value = h.spa || 0;
-        styreHustypeFelter(); visSide('side-opret-hus');
+        
+        document.getElementById('felt-pool').style.display = (h.type === 'Pool') ? 'block' : 'none';
+        document.getElementById('felt-spa').style.display = (h.type === 'Spa') ? 'block' : 'none';
+        
+        visSide('side-opret-hus');
     }
 
     function gemNytHus() {
@@ -558,20 +558,18 @@
         gemAltTilHukommelse(); visSide('side-kartotek');
     }
 
+    // MODAL ÅBNER TRÆFFENDE FIXET HER:
     function aabenOpgaveModal(id) {
         aktivOpgaveId = id;
         let o = opgaver.find(item => item.id === id); if(!o) return;
-        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", note: "" };
+        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", note: "", by: "", kode: "", telefon: "", type: "", pool: 27, spa: 1500 };
         
-        // Sørg for at omkostningslisten er initialiseret
         if(!o.omkostninger) o.omkostninger = [];
         midlertidigOmkListe = [...o.omkostninger];
         tegnOmkostningsListe();
 
-        // Nulstil SMS note-feltet
         document.getElementById('m-sms-note').value = "";
 
-        // Dobbelt note-visning øverst i vinduet
         let nRamme = document.getElementById('m-noter-ramme');
         nRamme.innerHTML = "";
         if(hus.note) {
@@ -584,7 +582,6 @@
         document.getElementById('m-navn').innerText = hus.adresse;
         document.getElementById('m-type').innerText = o.type;
         document.getElementById('m-adresse').innerText = hus.adresse + (hus.by ? ", " + hus.by : "");
-        document.getElementById('m-ejer-navn').innerText = hus.ejerNavn || "-";
         document.getElementById('m-kode').innerText = hus.kode || "-";
         document.getElementById('m-dato-visning').innerText = o.dato || "-";
         document.getElementById('m-telefon-visning').innerText = hus.telefon || "-";
@@ -809,7 +806,7 @@
     function aabenKortNavigation() {
         let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
         let hus = kartotek.find(h => h.id === o.kartotekId);
-        if(hus) window.open("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(hus.adresse + ", " + (hus.by || "")), '_blank');
+        if(hus) window.open("https://maps.google.com/?q=" + encodeURIComponent(hus.adresse + ", " + (hus.by || "")), '_blank');
     }
 
     function haardNulstilApp() { 

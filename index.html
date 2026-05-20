@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v41</title>
+    <title>Pool Service App v42</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
@@ -175,19 +175,21 @@
             </div>
         </div>
 
-        <div id="omkostning-sektion" style="background:#2a2a2a; padding:10px; border-radius:6px; margin-bottom:15px; border:1px solid #444;">
-            <label style="color:#60a5fa; font-weight:bold; margin-bottom:5px;">➕ Ekstra omkostninger</label>
-            <div class="grid-2">
-                <input id="omk-tekst" type="text" placeholder="F.eks. Nyt filter">
-                <input id="omk-pris" type="number" placeholder="Pris i kr.">
+        <div id="igang-felter-container" style="display:none;">
+            <div id="omkostning-sektion" style="background:#2a2a2a; padding:10px; border-radius:6px; margin-bottom:15px; border:1px solid #444;">
+                <label style="color:#60a5fa; font-weight:bold; margin-bottom:5px;">➕ Ekstra omkostninger</label>
+                <div class="grid-2">
+                    <input id="omk-tekst" type="text" placeholder="F.eks. Nyt filter">
+                    <input id="omk-pris" type="number" placeholder="Pris i kr.">
+                </div>
+                <button onclick="tilfoejEkstraOmkostning()" style="background:#4b5563; padding:6px; font-size:12px; margin-top:5px;">➕ Tilføj omkostning</button>
+                <div id="omk-liste-ramme" style="margin-top:8px;"></div>
             </div>
-            <button onclick="tilfoejEkstraOmkostning()" style="background:#4b5563; padding:6px; font-size:12px; margin-top:5px;">➕ Tilføj omkostning</button>
-            <div id="omk-liste-ramme" style="margin-top:8px;"></div>
-        </div>
 
-        <div class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444;">
-            <label style="color:#facc15; font-weight:bold;">✉️ Note direkte til SMS-kvitteringen</label>
-            <textarea id="m-sms-note" rows="2" placeholder="F.eks. Jeg har støvsuget spaen..."></textarea>
+            <div class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:15px;">
+                <label style="color:#facc15; font-weight:bold;">✉️ Note direkte til SMS-kvitteringen</label>
+                <textarea id="m-sms-note" rows="2" placeholder="F.eks. Jeg har støvsuget bunden..."></textarea>
+            </div>
         </div>
 
         <button onclick="aabenKortNavigation()" id="btn-maps" class="btn-maps">🗺️ Start Navigation</button>
@@ -228,15 +230,6 @@
         if (p === 4880) return "Nysted";
         if (p >= 4850 && p <= 4869) return "Stubbekøbing";
         if (p >= 4900 && p <= 4999) return "Lolland/Nakskov Område";
-        if (p >= 1000 && p <= 2999) return "København/Frederiksberg";
-        if (p >= 3000 && p <= 3699) return "Nordsjælland";
-        if (p >= 3700 && p <= 3799) return "Rønne/Bornholm";
-        if (p >= 4000 && p <= 4699) return "Midt/Sjælland";
-        if (p >= 5000 && p <= 5999) return "Fyn / Odense";
-        if (p >= 6000 && p <= 6999) return "Sønderjylland / Vestjylland";
-        if (p >= 7000 && p <= 7999) return "Østjylland / Midtjylland";
-        if (p >= 8000 && p <= 8999) return "Aarhus / Omegn";
-        if (p >= 9000 && p <= 9999) return "Nordjylland / Aalborg";
         return "";
     }
 
@@ -422,7 +415,7 @@
     }
 
     function styreHustypeFelter() {
-        let type = document.getElementById('focus-type' || 'hus-type').value;
+        let type = document.getElementById('hus-type').value;
         document.getElementById('felt-pool').style.display = (type === 'Pool') ? 'block' : 'none';
         document.getElementById('felt-spa').style.display = (type === 'Spa') ? 'block' : 'none';
     }
@@ -558,7 +551,6 @@
         gemAltTilHukommelse(); visSide('side-kartotek');
     }
 
-    // MODAL ÅBNER TRÆFFENDE FIXET HER:
     function aabenOpgaveModal(id) {
         aktivOpgaveId = id;
         let o = opgaver.find(item => item.id === id); if(!o) return;
@@ -613,13 +605,16 @@
             document.getElementById('kemi-sektion').style.display = 'none';
         }
 
+        // STYR SYNLIGHED AF NOTEFELT OG OMKOSTNINGER BASERET PÅ OM OPGAVEN ER STARTET
         if(o.startet) {
             document.getElementById('btn-start').style.display = 'none';
             document.getElementById('afslut-afsnit').style.display = 'block';
+            document.getElementById('igang-felter-container').style.display = 'block';
             document.getElementById('m-status').innerText = "Status: I gang";
         } else {
             document.getElementById('btn-start').style.display = 'block';
             document.getElementById('afslut-afsnit').style.display = 'none';
+            document.getElementById('igang-felter-container').style.display = 'none';
             document.getElementById('m-status').innerText = "Status: Klar";
         }
         document.getElementById('opgave-modal').style.display = 'flex';
@@ -667,7 +662,7 @@
 
     function afslutOpgave(sendSmsJaNej) {
         let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
-        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", telefon: "", ejerNavn: "" };
+        let hus = kartotek.find(h => h.id === o.kartotekId) || { adresse: "Ukendt", telefon: "", ejerNavn: "", type: "Pool" };
         let nu = new Date().getTime();
         
         let minutterBrugt = o.startet ? Math.round((nu - o.startet) / 60000) : 1;
@@ -706,33 +701,37 @@
         });
 
         if(sendSmsJaNej && hus.telefon) {
-            let smsDato = o.dato.split('-').reverse().join('-');
-            let smsTekst = `Hej ${hus.ejerNavn || 'ejer'}\n\n`;
-            smsTekst += `Poolservice Kvittering - ${smsDato}\n`;
-            smsTekst += `Adresse: ${hus.adresse}\n\n`;
-            smsTekst += `Udført arbejde: ${o.type}\n`;
+            let smsDato = o.dato.split('-').reverse().join('.');
             
-            if(o.type === "Poolkontrol" || o.type === "Spakontrol") {
-                smsTekst += `Jeg har rettet cheminiveauet til og at jeg har sørget for at den er pæn og ren til de næste gæster.\n`;
+            // DYNAMISK KLAR-TEKST AFHÆNGIG AF OPGAVETYPE ELLER HUSTYPE
+            let facilitetNavn = "Poolen";
+            if (o.type === "Spakontrol" || hus.type === "Spa") {
+                facilitetNavn = "Spaen";
+            }
+
+            let smsTekst = `Hej ${hus.ejerNavn || 'ejer'}\n\n`;
+            smsTekst += `Jeg har d. ${smsDato} udført ${o.type} på ${hus.adresse}.\n\n`;
+            smsTekst += `${facilitetNavn} er nu klar til de nye gæster.\n\n`;
+            
+            // INDSÆT NOTE FRA OPGAVEN HVIS DEN FINDES
+            if(smsNoteBruger) {
+                smsTekst += `${smsNoteBruger}\n\n`;
             }
             
-            smsTekst += `\nRegning:\n`;
-            smsTekst += `• ${o.type}: ${basisPris} kr.\n`;
+            smsTekst += `Regning:\n`;
+            smsTekst += `${o.type}: ${basisPris} kr.\n`;
             
+            // FLERE OMKOSTNINGER INDSÆTTES UNDER HINANDEN FOR BEDRE OVERBLIK
             if(midlertidigOmkListe.length > 0) {
                 midlertidigOmkListe.forEach(omk => {
-                    smsTekst += `• Ekstra: ${omk.tekst} (${omk.pris} kr.)\n`;
+                    smsTekst += `${omk.tekst}: ${omk.pris} kr.\n`;
                 });
             }
             
-            smsTekst += `• Pris i alt: ${totalPris} kr.\n\n`;
+            smsTekst += `Samlet pris: ${totalPris} kr.\n\n`;
             smsTekst += `Beløbet bedes overføres på MobilePay på 28 68 88 98 indenfor tre dage.\n\n`;
-            
-            if(smsNoteBruger) {
-                smsTekst += `Besked: ${smsNoteBruger}\n\n`;
-            }
-            
-            smsTekst += `Mange hilsner din poolmand`;
+            smsTekst += `Mange hilsner\n`;
+            smsTekst += `Din Poolmand 🏊‍♂️`;
             
             window.location.href = `sms:${hus.telefon}?body=${encodeURIComponent(smsTekst)}`;
         }
@@ -784,7 +783,7 @@
         }
 
         indhold += `<strong>💰 Regning:</strong><br>• ${h.type}: ${h.basisPris} kr.<br>`;
-        if(h.ekstraPris && h.ekstraPris > 0) indhold += `• Ekstra omkostninger: ${h.ekstraTekst}<br>`;
+        if(h.ekstraPris && h.ekstraPris > 0) indhold += `• Ekstra omkommely: ${h.ekstraTekst}<br>`;
         indhold += `<br><span style="font-size:15px;">• <strong>Pris i alt: <span style="color:#4ade80;">${h.samletPris} kr.</span></strong></span>`;
 
         document.getElementById('historik-modal').style.display = 'flex';
@@ -806,7 +805,7 @@
     function aabenKortNavigation() {
         let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
         let hus = kartotek.find(h => h.id === o.kartotekId);
-        if(hus) window.open("https://maps.google.com/?q=" + encodeURIComponent(hus.adresse + ", " + (hus.by || "")), '_blank');
+        if(hus) window.open("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(hus.adresse + ", " + (hus.by || "")), '_blank');
     }
 
     function haardNulstilApp() { 

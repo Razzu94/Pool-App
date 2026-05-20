@@ -2,10 +2,10 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v47</title>
+    <title>Pool Service App v48</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; margin: 0; }
+        body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; padding-bottom: 120px; margin: 0; }
         .container { max-width: 450px; margin: 0 auto; }
         .sektion { background: #1e1e1e; border: 1px solid #333; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: none; }
         h2 { color: white; margin-top: 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 5px; }
@@ -24,7 +24,7 @@
         .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
         .checkbox-item input { width: auto; transform: scale(1.2); cursor: pointer; }
         .sorterings-cluster { background: #222; padding: 8px; border-radius: 6px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 5px; }
-        .sort-btn { background: #4b5563; color: white; border: none; padding: 6px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; flex: 1; min-width: 80px; }
+        .sort-btn { background: #4b5563; color: white; border: none; padding: 6px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; flex: 1; min-width: 80px; text-align: center; }
         .sort-btn.active { background: #2563eb; }
         label { display: block; color: #9ca3af; font-size: 12px; margin-bottom: 4px; }
         input, select, textarea { width: 100%; box-sizing: border-box; background-color: #2a2a2a; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 14px; }
@@ -55,6 +55,11 @@
         .moms-advarsel-tekst { color: #f87171; font-weight: bold; text-align: center; margin-top: -10px; margin-bottom: 15px; font-size: 14px; }
         .til-gode-item { font-size: 13px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px dashed #444; display: flex; justify-content: space-between; }
         .kvittering-mini-card { background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* FAST APP LOGO I BUNDEN */
+        .bund-logo-container { position: fixed; bottom: 0; left: 0; right: 0; background: #121212; padding: 15px 0; display: flex; justify-content: center; z-index: 80; pointer-events: none; }
+        .poolmand-logo-kort { background-color: #115d75; width: 180px; height: 95px; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .logo-tekst { color: #ffffff; font-family: 'Arial Black', Impact, sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 0.5px; margin: 0; padding: 0; padding-bottom: 4px; border-bottom: 3px solid #ffffff; line-height: 1; width: 80%; text-align: center; }
     </style>
 </head>
 <body>
@@ -68,10 +73,9 @@
 
 <div class="container">
     <div id="side-opgaver" class="sektion" style="display: block;">
-        <h2>📋 Dagens Opgaver</h2>
+        <h2>📋 Opgaver</h2>
         <div class="sorterings-cluster">
-            <button id="sort-opg-dato-asc" onclick="setOpgaveSortering('dato-asc')" class="sort-btn active">📅 Dato (Nærmeste)</button>
-            <button id="sort-opg-dato-desc" onclick="setOpgaveSortering('dato-desc')" class="sort-btn">📅 Dato (Længste)</button>
+            <button id="sort-opg-dato-toggle" onclick="toggleDatoSortering()" class="sort-btn active">📅 Dato (Nærmeste)</button>
             <button id="sort-opg-afstand" onclick="setOpgaveSortering('afstand')" class="sort-btn">📍 Afstand (GPS)</button>
         </div>
         <div id="liste-beholder"></div>
@@ -199,6 +203,12 @@
         
         <button onclick="gemNytHus()" style="background:#16a34a;" id="btn-gem-hus">Gem Kunde</button>
         <button onclick="visSide('side-kartotek')" class="btn-annuller">Annuller</button>
+    </div>
+</div>
+
+<div class="bund-logo-container">
+    <div class="poolmand-logo-kort">
+        <p class="logo-tekst">DIN POOLMAND</p>
     </div>
 </div>
 
@@ -375,7 +385,21 @@
         if(sideId === 'side-regnskab') { document.getElementById('btn-nav-reg').classList.add('active'); opdaterRegnskabstal(); }
     }
 
-    function setOpgaveSortering(type) { opgaveSortering = type; bygOpgaveliste(); }
+    // DYNAMISK DATO TOGGLE FUNKTION
+    function toggleDatoSortering() {
+        if (opgaveSortering === 'dato-asc') {
+            opgaveSortering = 'dato-desc';
+        } else {
+            opgaveSortering = 'dato-asc';
+        }
+        bygOpgaveliste();
+    }
+
+    function setOpgaveSortering(type) { 
+        opgaveSortering = type; 
+        bygOpgaveliste(); 
+    }
+    
     function setKartotekSortering(type) { kartotekSortering = type; bygKartotek(); }
     function setHistorikSortering(type) { historikSortering = type; bygHistorik(); }
 
@@ -401,8 +425,22 @@
         else if(opgaveSortering === 'dato-desc') { listeKopi.sort((x,y) => new Date(y.dato) - new Date(x.dato)); }
         else if(opgaveSortering === 'afstand') { listeKopi.sort((x,y) => (x._afstand || 9999) - (y._afstand || 9999)); }
 
-        document.querySelectorAll('#side-opgaver .sort-btn').forEach(btn => btn.classList.remove('active'));
-        let aktBtn = document.getElementById('sort-opg-' + opgaveSortering); if(aktBtn) aktBtn.classList.add('active');
+        // Opdater knap-udseende og tekst dynamisk
+        let datoBtn = document.getElementById('sort-opg-dato-toggle');
+        let afstBtn = document.getElementById('sort-opg-afstand');
+        
+        datoBtn.classList.remove('active');
+        afstBtn.classList.remove('active');
+
+        if (opgaveSortering === 'dato-asc') {
+            datoBtn.classList.add('active');
+            datoBtn.innerText = "📅 Dato (Nærmeste)";
+        } else if (opgaveSortering === 'dato-desc') {
+            datoBtn.classList.add('active');
+            datoBtn.innerText = "📅 Dato (Længste)";
+        } else if (opgaveSortering === 'afstand') {
+            afstBtn.classList.add('active');
+        }
 
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
@@ -493,7 +531,6 @@
                 else if (h.type === "Lindetpakker") lindetIndtjening += h.samletPris;
                 else if (h.type === "Ad-hoc") adhocIndtjening += h.samletPris;
                 
-                // Tilføj til "Kvitteringer" listen under regnskab
                 if (kvitteringerBeholder) {
                     let kortTitel = h.type === "Ad-hoc" ? h.titel : (h.type === "Lindetpakker" ? `Linnedpakker (${h.lindetAntal} stk)` : h.type);
                     kvitteringerBeholder.innerHTML += `
@@ -756,7 +793,6 @@
         let hasInternNote = (o.type === "Ad-hoc" || o.type.startsWith("Spakontrol"));
         document.getElementById('m-adhoc-arbejdsrapport-felt').style.display = hasInternNote ? 'block' : 'none';
         
-        // Afkrydsningsfeltet kommer FØRST frem under "igang-felter-container", når den er startet
         document.getElementById('lindet-afkryds-sektion').style.display = (o.type === "Lindetpakker" && o.startet) ? 'block' : 'none';
 
         if(o.type === "Lindetpakker") {
@@ -769,7 +805,6 @@
             document.getElementById('igang-felter-container').style.display = 'block';
             document.getElementById('m-status').innerText = "Status: I gang";
             
-            // Hvis det er linnedpakker, styres afslut-knap af om den er krydset af som leveret
             if(o.type === "Lindetpakker") {
                 document.getElementById('btn-hoved-afslut').disabled = !o.lindetLeveret;
                 document.getElementById('btn-hoved-afslut').style.opacity = o.lindetLeveret ? "1" : "0.5";
@@ -870,7 +905,6 @@
         let adhocRapportTekst = document.getElementById('m-adhoc-udfoert-tekst').value.trim();
         let smsNoteBruger = document.getElementById('m-sms-note').value.trim();
 
-        // Kemi værdier gemmes udelukkende internt i historikken til dit eget opslag
         let gemKemiData = null;
         if(o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning") {
             gemKemiData = {
@@ -933,7 +967,6 @@
         
         let indhold = `<strong>Ejer:</strong> ${h.ejerNavn || '-'}<br><strong>Hus:</strong> ${h.adresse}<br><strong>Dato:</strong> ${h.dato || '-'}<br><strong>Type:</strong> ${tLabel}<br><hr style="border-color:#444;">`;
         
-        // Fuld visning af alle indtastede kemi-målinger til eget opslag
         if(h.kemiHistorik) {
             let kh = h.kemiHistorik;
             indhold += `
@@ -985,10 +1018,8 @@
         }
     }
 
-    // Funktion til at generere og printe en professionel PDF-kvittering uden kemi
     function eksporterKvitteringPDF(idTid) {
         let h = historik.find(item => item._idTid === idTid); if(!h) return;
-        
         let tLabel = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel}` : (h.type === "Lindetpakker" ? `Linnedpakker (${h.lindetAntal} stk)` : h.type);
         
         let printVindue = window.open('', '_blank');
@@ -1013,7 +1044,6 @@
                     <div class="title">KVITTERING</div>
                     <div>Din Poolmand • Tlf: 28 68 88 98</div>
                 </div>
-                
                 <div class="meta-grid">
                     <div>
                         <strong>Udført hos:</strong><br>
@@ -1027,64 +1057,45 @@
                         <strong>Id-reference:</strong> #Q-${h._idTid}
                     </div>
                 </div>
-
                 <h3>Specifikation af arbejde:</h3>
                 <table>
                     <thead>
-                        <tr>
-                            <th>Beskrivelse</th>
-                            <th style="text-align: right;">Pris</th>
-                        </tr>
+                        <tr><th>Beskrivelse</th><th style="text-align: right;">Pris</th></tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>${tLabel}</td>
-                            <td style="text-align: right;">${h.basisPris} kr.</td>
-                        </tr>`);
+                        <tr><td>${tLabel}</td><td style="text-align: right;">${h.basisPris} kr.</td></tr>`);
                         
         if(h.type === "Lindetpakker" && h.lindetAntal > 0) {
             printVindue.document.write(`
-                        <tr>
-                            <td>Linnedpakker udbringning (${h.lindetAntal} stk)</td>
-                            <td style="text-align: right;">${h.lindetAntal * 150} kr.</td>
-                        </tr>`);
+                        <tr><td>Linnedpakker udbringning (${h.lindetAntal} stk)</td><td style="text-align: right;">${h.lindetAntal * 150} kr.</td></tr>`);
         }
-
         if(h.omkostninger && h.omkostninger.length > 0) {
             h.omkostninger.forEach(o => {
                 printVindue.document.write(`
-                        <tr>
-                            <td>Ekstraomkostning: ${o.tekst}</td>
-                            <td style="text-align: right;">${o.pris} kr.</td>
-                        </tr>`);
+                        <tr><td>Ekstraomkostning: ${o.tekst}</td><td style="text-align: right;">${o.pris} kr.</td></tr>`);
             });
         }
-
         printVindue.document.write(`
-                        <tr class="total-række">
-                            <td>I alt (DKK):</td>
-                            <td style="text-align: right; color:#16a34a;">${h.samletPris} kr.</td>
-                        </tr>
+                        <tr class="total-række"><td>I alt (DKK):</td><td style="text-align: right; color:#16a34a;">${h.samletPris} kr.</td></tr>
                     </tbody>
                 </table>
-
                 <div style="margin-top: 40px; background: #f9fafb; padding: 15px; border-radius: 6px; font-size: 13px;">
                     <strong>Bemærkning:</strong> Beløbet er registreret som modtaget via MobilePay. Tak for handlen!
                 </div>
-
-                <div class="footer">
-                    Din Poolmand • CVR: XXXXXXXX • Mobil: 28 68 88 98 • MobilePay: 28 68 88 98
-                </div>
-
-                <script>
-                    window.onload = function() { window.print(); };
-                <\/script>
+                <div class="footer">Din Poolmand • Mobil: 28 68 88 98 • MobilePay: 28 68 88 98</div>
+                <script>window.onload = function() { window.print(); };<\/script>
             </body>
             </html>
         `);
         printVindue.document.close();
     }
     
+    // OPDATERET DIREKTE LIVE NAVIGATION API
+    function aabenKortNavigation() {
+        let adr = document.getElementById('m-adresse').innerText;
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(adr)}&travelmode=driving`, '_blank');
+    }
+
     function beregnKemi() {
         let mk = parseFloat(document.getElementById('kemi-maalt-klor').value) || 0;
         let ok = parseFloat(document.getElementById('kemi-oensket-klor').value) || 0;
@@ -1112,11 +1123,6 @@
 
     function lukOpgaveModal() { document.getElementById('opgave-modal').style.display = 'none'; bygOpgaveliste(); }
     function sletOpgave(id) { if(confirm("Vil du slette denne opgave?")) { opgaver = opgaver.filter(o => o.id !== id); gemAltTilHukommelse(); bygOpgaveliste(); } }
-    
-    function aabenKortNavigation() {
-        let adr = document.getElementById('m-adresse').innerText;
-        window.open(`http://maps.google.com/?q=${encodeURIComponent(adr)}`, '_blank');
-    }
     
     function haandterSmsNoteInput() {
         let o = opgaver.find(item => item.id === aktivOpgaveId);

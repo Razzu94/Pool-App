@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <title>Pool Service App v50</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="apple-touch-icon" href="https://i.ibb.co/68v08qg/din-poolmand-logo.png">
+    <link rel="icon" type="image/png" href="https://i.ibb.co/68v08qg/din-poolmand-logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <style>
         body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; padding-bottom: 120px; margin: 0; }
         .container { max-width: 450px; margin: 0 auto; }
@@ -490,7 +496,7 @@
             }
         }
 
-        // HENT IDAGS DATO FOR SAMMENLIGNING AF KANTER (2026 FORMAT)
+        // HENT IDAGS DATO FOR SAMMENLIGNING AF KANTER
         let iDagStreng = new Date().toISOString().split('T')[0];
 
         listeKopi.forEach(o => {
@@ -687,19 +693,20 @@
         } else if(o.type === "Lindetpakker") {
             document.getElementById('opret-opg-lindet-antal').value = o.lindetAntal || "1";
         }
+        visSide('side-rediger-opgave'); // Sikrer korrekt fane
         visSide('side-opret-opgave');
     }
 
     function haandterHusValgIOpgave() {
         let hId = parseInt(document.getElementById('opret-opg-hus-select').value); if(!hId) return;
-        let hus = kartotek.find(h => h.id === hId); if(!hus) return;
+        let poolhus = kartotek.find(h => h.id === hId); if(!poolhus) return;
         let typeSelect = document.getElementById('opret-opg-type'); typeSelect.innerHTML = '';
         
-        if(hus.hasPool || hus.hasPool === undefined) {
+        if(poolhus.hasPool || poolhus.hasPool === undefined) {
             typeSelect.innerHTML += '<option value="Poolkontrol">Poolkontrol (400 kr.)</option>';
             typeSelect.innerHTML += '<option value="Poolkontrol + Bundsugning">Poolkontrol + Bundsugning (600 kr.)</option>';
         }
-        if(hus.hasSpa) {
+        if(poolhus.hasSpa) {
             typeSelect.innerHTML += '<option value="Spakontrol">Spakontrol (300 kr.)</option>';
             typeSelect.innerHTML += '<option value="Spakontrol + Skift af vand">Spakontrol + Skift af vand (600 kr.)</option>';
             typeSelect.innerHTML += '<option value="Spakontrol + Pipecleaner">Spakontrol + Pipecleaner (1000 kr.)</option>';
@@ -774,7 +781,7 @@
     function aabenOpretHusSide() {
         document.getElementById('hus-id-skjult').value = "";
         document.getElementById('hus-skema-titel').innerText = "🏠 Tilføj Kunde / Hus";
-        document.getElementById('genvej-opret-opg-btn').style.display = 'none'; // Skjul genvej ved ny oprettelse
+        document.getElementById('genvej-opret-opg-btn').style.display = 'none'; 
         document.getElementById('hus-adresse').value = ""; document.getElementById('hus-by').value = "";
         document.getElementById('hus-postnr').value = ""; document.getElementById('hus-ejer-navn').value = "";
         document.getElementById('hus-telefon').value = ""; document.getElementById('hus-ejer2-navn').value = "";
@@ -790,7 +797,7 @@
         document.getElementById('hus-id-skjult').value = h.id;
         document.getElementById('hus-skema-titel').innerText = "✏️ Rediger Kunde";
         
-        // VIS GENVEJSKNAP TIL AT OPRETTE OPGAVE DIREKTE PÅ KUNDEN
+        // VIS HURTIG OPRET-KNAP PÅ KUNDEN
         let gBtn = document.getElementById('genvej-opret-opg-btn');
         if(gBtn) gBtn.style.display = 'block';
 
@@ -804,7 +811,7 @@
         styreHusStaerrelseFelter(); visSide('side-opret-hus');
     }
 
-    // HURTIG OPRET OPGAVE FRA KUNDE-KARTOTEK GENVEJ
+    // GENVEJSFUNKTION FRA KARTOTEK TIL OPGAVE
     function genvejHusTilOpgave() {
         let hId = document.getElementById('hus-id-skjult').value; if(!hId) return;
         aabenOpretOpgaveSide();
@@ -835,14 +842,13 @@
         document.getElementById('m-adhoc-udfoert-tekst').value = o.udfoertRapport || "";
         document.getElementById('m-sms-note').value = o.smsNoteTilEjer || "";
 
-        // Skjul kemihistorik-boks som standard hver gang modal åbnes
         document.getElementById('m-kemi-historik-udrul').style.display = 'none';
 
         let nRamme = document.getElementById('m-noter-ramme'); nRamme.innerHTML = "";
         if(hus.note) nRamme.innerHTML += `<div style="background:rgba(56,189,248,0.15); border-left:4px solid #38bdf8; padding:8px; margin-bottom:5px; font-size:13px; color:white;"><strong>🏠 Fast note:</strong> ${hus.note}</div>`;
         if(o.note) nRamme.innerHTML += `<div style="background:rgba(250,204,21,0.15); border-left:4px solid #facc15; padding:8px; font-size:13px; color:white;"><strong>📝 Opgave note:</strong> ${o.note}</div>`;
 
-        // OPGRADERET OPGAVE-INFO VINDUE MED EJER 1 NAVN, KLIKBART CODES & NUMRE OG PLACERING
+        // OPGRADERET OPGAVE-INFO VINDUE MED EJER 1 FLYTTET I BOXEN, PLACERING OG KLIKBART CODES
         document.getElementById('m-navn').innerText = hus.adresse;
         document.getElementById('m-ejer-navn').innerText = hus.ejerNavn || "-";
         document.getElementById('m-type').innerText = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel}` : (o.type === "Lindetpakker" ? "Udbringning af Linnedpakker" : o.type);
@@ -851,7 +857,7 @@
         document.getElementById('m-nogle-placering').innerText = hus.placering ? `(${hus.placering})` : "";
         document.getElementById('m-dato-visning').innerText = o.dato || "-";
         
-        // GØR NUMMERET KLIKBART
+        // GØR TILLIGE TELEFONNUMMER KLIKBART
         let tLink = document.getElementById('m-telefon-link');
         if(hus.telefon) {
             tLink.innerText = hus.telefon;
@@ -878,7 +884,7 @@
         let hasKemi = (o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning" || o.type.startsWith("Spakontrol"));
         document.getElementById('kemi-sektion').style.display = hasKemi ? 'block' : 'none';
         
-        // KEMI-HUKOMMELSE LOGIK: Hent automatisk målingerne ind fra forrige besøg på netop denne adresse
+        // KEMI-HUKOMMELSE LOGIK: Hent automatisk målingerne ind fra forrige besøg
         if(hasKemi) {
             let sidsteBesøg = [...historik]
                 .reverse()
@@ -888,11 +894,10 @@
                 document.getElementById('kemi-maalt-klor').value = sidsteBesøg.kemiHistorik.maaltKlor || "1.0";
                 document.getElementById('kemi-maalt-ph').value = sidsteBesøg.kemiHistorik.maaltPh || "7.0";
             } else {
-                // Hvis intet historisk data findes, sæt app standard
                 document.getElementById('kemi-maalt-klor').value = "1.0";
                 document.getElementById('kemi-maalt-ph').value = "7.0";
             }
-            beregnKemi(); // Genberegn med det samme baseret på indlæst data
+            beregnKemi(); 
         }
 
         let hasInternNote = (o.type === "Ad-hoc" || o.type.startsWith("Spakontrol"));
@@ -926,7 +931,7 @@
         document.getElementById('opgave-modal').style.display = 'flex';
     }
 
-    // KEMI HISTORIK OVER DE SIDSTE 5 BESØG
+    // UDRULNING AF KEMI-HISTORIK (DE SIDSTE 5 OPGAUER PÅ HUSET)
     function toggleVisKemiHistorik() {
         let boks = document.getElementById('m-kemi-historik-udrul');
         if(boks.style.display === 'block') {
@@ -937,7 +942,6 @@
         let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
         let hus = kartotek.find(h => h.id === o.kartotekId); if(!hus) return;
 
-        // Filtrer historikken så vi kun ser de seneste 5 kemimålinger for dette hus
         let alleHustiltag = historik.filter(h => h.adresse === hus.adresse && h.kemiHistorik);
         let senesteFem = alleHustiltag.slice(-5).reverse();
 
@@ -1258,7 +1262,7 @@
         document.getElementById('res-phplus').innerText = phplus;
     }
 
-    // AUTOMATISK LØSNING B SIKKERHEDSKOPI (DOWNLOAD .JSON FIL)
+    // LØSNING B BACKUP DOWNLOAD AUTOMATION
     function eksporterSikkerhedskopi() {
         let samletEksportData = {
             kartotek: kartotek,
@@ -1281,7 +1285,7 @@
         downloadAnker.remove();
     }
 
-    // IMPORTER / GENDAN LOKAL SIKKERHEDSKOPI FIL
+    // IMPORTER BACKUP-FIL
     function importerSikkerhedskopi(event) {
         let fil = event.target.files[0]; if (!fil) return;
         let r = new FileReader();

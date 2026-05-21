@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pool Kontrol</title>
+    <title>Pool Kontrol - Version 51 + Opdatering 1</title>
     <style>
-        /* --- DESIGN SYSTEM & TEMAVARIABLER --- */
+        /* --- DESIGN SYSTEM & TEMAVARIABLER (FRA V51) --- */
         :root {
             --bg-color: #000000;
             --surface-color: #121212;
@@ -40,7 +40,7 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: var(--font-family);
-            padding-bottom: 80px;
+            padding-bottom: 90px;
         }
 
         /* --- TOP FANER --- */
@@ -80,7 +80,7 @@
             display: block;
         }
 
-        /* --- OPTERTS-MENU (IDENTISK) --- */
+        /* --- FORMULARER & INDTASTNING --- */
         .opret-container {
             background-color: var(--surface-card);
             border: 1px solid var(--border-color);
@@ -127,7 +127,7 @@
             cursor: pointer;
         }
 
-        /* --- OPGAVEKORT & OVERSKREDET VARIANT --- */
+        /* --- OPGAVEKORT (OPDATERING 1 VARIANT) --- */
         .task-card {
             background-color: var(--surface-card);
             border: 1px solid var(--border-color);
@@ -230,7 +230,6 @@
             cursor: default;
         }
 
-        /* Farvekoder på kalender-tal */
         .calendar-day.status-normal { color: var(--text-main); }
         .calendar-day.status-planned { color: var(--accent-color); }
         .calendar-day.status-completed { color: var(--danger-color); }
@@ -249,7 +248,7 @@
             border-radius: 50%;
         }
 
-        /* --- GAMLE BUND-IKONER (BEVARET TIL OPDRATERING 3) --- */
+        /* --- NAVIGATION I BUNDEN (FRA VERSION 51) --- */
         .bottom-bar {
             position: fixed;
             bottom: 0;
@@ -259,7 +258,7 @@
             border-top: 1px solid var(--border-color);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
+            padding: 12px 0;
             z-index: 100;
         }
 
@@ -272,6 +271,56 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            font-weight: 500;
+        }
+
+        .bottom-btn span {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        /* --- MODAL / OVERLAY FOR VÆRKTØJ & INDSTILLINGER (FRA V51) --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0,7);
+            z-index: 200;
+            padding: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         .section-title {
@@ -344,6 +393,14 @@
                 <label>Adresse</label>
                 <input type="text" id="cust-address" class="form-control" placeholder="Vejnavn 12">
             </div>
+            <div class="form-group">
+                <label>Telefonnummer</label>
+                <input type="tel" id="cust-phone" class="form-control" placeholder="12345678">
+            </div>
+            <div class="form-group">
+                <label>Faste kemiværdier / Noter</label>
+                <textarea id="cust-notes" class="form-control" rows="3" placeholder="Faste noter til denne kunde..."></textarea>
+            </div>
             <button class="btn-primary" onclick="createCustomer()">Opret Kunde</button>
         </div>
         <h2 class="section-title">Kundekartotek</h2>
@@ -351,25 +408,59 @@
     </main>
 
     <div class="bottom-bar">
-        <button class="bottom-btn">🛠️ Værktøj</button>
-        <button class="bottom-btn" onclick="toggleTheme()">⚙️ Indstillinger</button>
+        <button class="bottom-btn" onclick="openModal('tools-modal')">🛠️<br>Værktøj</button>
+        <button class="bottom-btn" onclick="openModal('settings-modal')">⚙️<br>Indstillinger</button>
+    </div>
+
+    <div id="tools-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🛠️ Værktøjer</h3>
+                <button class="close-modal" onclick="closeModal('tools-modal')">Luk</button>
+            </div>
+            <p style="color:var(--text-muted); margin-bottom:15px;">Gamle beregnere og værktøjer herunder:</p>
+            <div class="form-group">
+                <label>Vandvolumen (m³)</label>
+                <input type="number" class="form-control" placeholder="Indtast m³">
+            </div>
+            <button class="btn-primary" style="background-color:var(--surface-color); color:var(--text-main); border:1px solid var(--border-color);">Hurtig testberegning</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⚙️ Indstillinger</h3>
+                <button class="close-modal" onclick="closeModal('settings-modal')">Luk</button>
+            </div>
+            <div class="form-group">
+                <button class="btn-primary" style="margin-bottom:10px;" onclick="toggleTheme()">Skift Tema (Lys/Mørk)</button>
+                <button class="btn-primary" style="margin-bottom:10px; background-color:var(--surface-color); color:var(--text-main); border:1px solid var(--border-color);">Lav Backup</button>
+                <button class="btn-primary" style="background-color:var(--danger-color); color:white;" onclick="alert('Nulstiller appen...')">Nulstil App-data</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Data states (Gemmes i LocalStorage)
         let customers = JSON.parse(localStorage.getItem('pool_customers')) || [];
         let tasks = JSON.parse(localStorage.getItem('pool_tasks')) || [];
         
         let currentCalendarDate = new Date();
         let selectedCalendarDate = new Date();
 
-        // Gemmer ændringer
         function saveData() {
             localStorage.setItem('pool_customers', JSON.stringify(customers));
             localStorage.setItem('pool_tasks', JSON.stringify(tasks));
         }
 
-        // Skift visning mellem top-faner
+        // Modals kontrol (Fra v51)
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
         function switchView(viewId, btnElement) {
             document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -378,38 +469,29 @@
             btnElement.classList.add('active');
         }
 
-        // Hjælper: Formatér til YYYY-MM-DD
         function formatDateString(date) {
             let d = new Date(date),
                 month = '' + (d.getMonth() + 1),
                 day = '' + d.getDate(),
                 year = d.getFullYear();
-
             if (month.length < 2) month = '0' + month;
             if (day.length < 2) day = '0' + day;
             return [year, month, day].join('-');
         }
 
-        // Hent mandag og søndag for indeværende uge
         function getThisWeeksRange() {
             let today = new Date();
-            let dayOfWeek = today.getDay(); // 0 = søndag, 1 = mandag...
+            let dayOfWeek = today.getDay();
             let distanceFromMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-            
             let monday = new Date(today);
             monday.setDate(today.getDate() + distanceFromMonday);
             monday.setHours(0,0,0,0);
-
             let sunday = new Date(monday);
             sunday.setDate(monday.getDate() + 6);
             sunday.setHours(23,59,59,999);
-
             return { monday, sunday };
         }
 
-        // --- APPLIKATIONENS KERNELOGIK (OPDATERING 1) ---
-
-        // Byg rullemenuer til kunder
         function updateCustomerDropdowns() {
             const selects = ['task-customer-select', 'cal-customer-select'];
             selects.forEach(id => {
@@ -420,29 +502,41 @@
             });
         }
 
-        // Opret kunde
+        // Fuld kundeoprettelse fra v51 bevaret intakt
         function createCustomer() {
             const name = document.getElementById('cust-name').value.trim();
             const address = document.getElementById('cust-address').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
+            const notes = document.getElementById('cust-notes').value.trim();
+
             if(!name || !address) return alert('Udfyld venligst både navn og adresse.');
 
-            const newCustomer = { id: Date.now().toString(), name, address };
+            const newCustomer = { 
+                id: Date.now().toString(), 
+                name, 
+                address, 
+                phone: phone || '', 
+                notes: notes || '' 
+            };
+            
             customers.push(newCustomer);
             saveData();
             
             document.getElementById('cust-name').value = '';
             document.getElementById('cust-address').value = '';
+            document.getElementById('cust-phone').value = '';
+            document.getElementById('cust-notes').value = '';
             
             updateCustomerDropdowns();
             renderCustomers();
+            alert('Kunde oprettet succesfuldt!');
         }
 
-        // Opret opgave fra enten Forside eller Kalender (Identisk logik)
         function createTaskFromUI(selectId, dateInputId) {
             const customerId = document.getElementById(selectId).value;
             const dateValue = document.getElementById(dateInputId).value;
 
-            if(!customerId || !dateValue) return alert('Vælg venligst en kunde og en gyldig dato.');
+            if(!customerId || !dateValue) return alert('Vælg en kunde og en dato.');
 
             const newTask = {
                 id: Date.now().toString(),
@@ -455,25 +549,22 @@
             tasks.push(newTask);
             saveData();
 
-            // Opdater visninger
             renderActiveTasks();
             renderCalendar();
             alert('Opgave oprettet!');
         }
 
-        // Udfør en opgave (Flytter datoen til i dag, hvis den var overskredet)
         function completeTask(taskId) {
             const task = tasks.find(t => t.id === taskId);
             if(task) {
                 task.completed = true;
-                task.completedDate = formatDateString(new Date()); // Logføres på den reelle afslutningsdag
+                task.completedDate = formatDateString(new Date()); // Flyttes automatisk til i dag ved afslutning
                 saveData();
                 renderActiveTasks();
                 renderCalendar();
             }
         }
 
-        // Render Forsiden: Det "Skrumpende" Ugeoverblik + Overskredne opgaver
         function renderActiveTasks() {
             const listContainer = document.getElementById('active-tasks-list');
             if(!listContainer) return;
@@ -482,30 +573,27 @@
             const { monday, sunday } = getThisWeeksRange();
             const todayStr = formatDateString(new Date());
 
-            // Filtrér opgaver
             const overskredne = [];
             const denneUge = [];
 
             tasks.forEach(t => {
-                if (t.completed) return; // Skjul afsluttede opgaver fra forsiden
+                if (t.completed) return;
 
                 let taskDate = new Date(t.date);
                 taskDate.setHours(0,0,0,0);
 
                 if (taskDate < monday) {
-                    overskredne.push(t); // Gamle opgaver slæbes med
+                    overskredne.push(t);
                 } else if (taskDate >= monday && taskDate <= sunday) {
-                    // Det skrumpende element: Vis kun fra dags dato og ugen ud
                     if (t.date >= todayStr) {
                         denneUge.push(t);
                     }
                 }
             });
 
-            // Sorter denne uge kronologisk
             denneUge.sort((a,b) => a.date.localeCompare(b.date));
 
-            // Byg HTML for Overskredne øverst
+            // Overskredne øverst (Med rød kant fra Opdatering 1)
             overskredne.forEach(t => {
                 const customer = customers.find(c => c.id === t.customerId) || {name: 'Ukendt', address: 'Ukendt'};
                 listContainer.innerHTML += `
@@ -521,7 +609,7 @@
                 `;
             });
 
-            // Byg HTML for Ugens planlagte opgaver
+            // Ugens planlagte
             denneUge.forEach(t => {
                 const customer = customers.find(c => c.id === t.customerId) || {name: 'Ukendt', address: 'Ukendt'};
                 listContainer.innerHTML += `
@@ -537,11 +625,10 @@
             });
 
             if(overskredne.length === 0 && denneUge.length === 0) {
-                listContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">Ingen opgaver for resten af ugen!</p>';
+                listContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">Ingen flere opgaver for denne uge!</p>';
             }
         }
 
-        // --- KALENDER DETALJERET LOGIK ---
         function changeMonth(direction) {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
             renderCalendar();
@@ -558,24 +645,19 @@
             if(!container) return;
 
             container.innerHTML = '';
-            
             const year = currentCalendarDate.getFullYear();
             const month = currentCalendarDate.getMonth();
             
             const monthNames = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
             monthTitle.innerText = `${monthNames[month]} ${year}`;
 
-            // Ugedags-labels
             const days = ['Ma', 'Ti', 'On', 'To', 'Fr', 'Lø', 'Sø'];
             days.forEach(d => container.innerHTML += `<div class="weekday-label">${d}</div>`);
 
-            // Startdag i måneden (Korrigeret til dansk ugestart: mandag)
             let firstDay = new Date(year, month, 1).getDay();
             let leadingSpaces = firstDay === 0 ? 6 : firstDay - 1;
-            
             const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-            // Tomme felter inden den 1. i måneden
             for(let i = 0; i < leadingSpaces; i++) {
                 container.innerHTML += `<div class="calendar-day empty"></div>`;
             }
@@ -583,26 +665,17 @@
             const todayStr = formatDateString(new Date());
             const selectedStr = formatDateString(selectedCalendarDate);
 
-            // Generer selve dagene
             for(let day = 1; day <= daysInMonth; day++) {
                 let d = new Date(year, month, day);
                 let dStr = formatDateString(d);
+                let statusClass = 'status-normal';
 
-                // Bestem farvekode baseret på opgavestatus
-                let statusClass = 'status-normal'; // Standard: Sort/Hvid
-
-                // Tjek om der er gennemførte eller planlagte opgaver på denne dag
                 const dayTasks = tasks.filter(t => (t.completed ? t.completedDate : t.date) === dStr);
-                
                 if (dayTasks.length > 0) {
                     const harPlanlagte = dayTasks.some(t => !t.completed && t.date >= todayStr);
                     const harUdførte = dayTasks.some(t => t.completed);
-
-                    if (harPlanlagte) {
-                        statusClass = 'status-planned'; // Grøn
-                    } else if (harUdførte) {
-                        statusClass = 'status-completed'; // Rød
-                    }
+                    if (harPlanlagte) statusClass = 'status-planned';
+                    else if (harUdførte) statusClass = 'status-completed';
                 }
 
                 let isToday = dStr === todayStr ? 'today' : '';
@@ -614,8 +687,6 @@
                     </div>
                 `;
             }
-
-            // Opdater listen over opgaver under kalenderen for den valgte dag
             renderCalendarDayTasks(selectedStr);
         }
 
@@ -628,12 +699,11 @@
             title.innerText = `Opgaver d. ${dateStr}`;
             listContainer.innerHTML = '';
 
-            // Hent opgaver der hører til dagen (enten planlagt på dagen, eller udført på dagen)
             const dayTasks = tasks.filter(t => (t.completed ? t.completedDate : t.date) === dateStr);
 
             dayTasks.forEach(t => {
                 const customer = customers.find(c => c.id === t.customerId) || {name: 'Ukendt', address: 'Ukendt'};
-                let statusText = t.completed ? `<span style="color:var(--danger-color); font-weight:bold;">✓ Udført i dag</span>` : `<span>Planlagt</span>`;
+                let statusText = t.completed ? `<span style="color:var(--danger-color); font-weight:bold;">✓ Udført</span>` : `<span>Planlagt</span>`;
                 let actionBtn = !t.completed ? `<button class="btn-complete" style="margin-top:5px;" onclick="completeTask('${t.id}')">Udført</button>` : '';
 
                 listContainer.innerHTML += `
@@ -649,44 +719,40 @@
             });
 
             if(dayTasks.length === 0) {
-                listContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Ingen registrerede opgaver på denne dato.</p>';
+                listContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Ingen opgaver denne dag.</p>';
             }
 
-            // SPÆRRING FOR FORTIDEN: Vis kun opret-menu, hvis datoen er i dag eller i fremtiden
             const todayStr = formatDateString(new Date());
             if(dateStr >= todayStr) {
                 opretBox.style.display = 'block';
-                calDateInput.value = dateStr; // Autoudfyld dato
+                calDateInput.value = dateStr;
             } else {
-                opretBox.style.display = 'none'; // Skjul/lås hvis det er i fortiden
+                opretBox.style.display = 'none';
             }
         }
 
-        // Render Kundekartotek
         function renderCustomers() {
             const container = document.getElementById('customers-list');
             if(!container) return;
             container.innerHTML = customers.map(c => `
                 <div class="task-card">
                     <div class="task-title">${c.name}</div>
-                    <div class="task-details" style="margin-bottom:0;">${c.address}</div>
+                    <div class="task-details"><b>Adresse:</b> ${c.address}</div>
+                    ${c.phone ? `<div class="task-details"><b>Tlf:</b> ${c.phone}</div>` : ''}
+                    ${c.notes ? `<div class="task-details" style="font-style:italic; color:var(--text-muted);"><b>Faste noter:</b> ${c.notes}</div>` : ''}
                 </div>
             `).join('');
             if(customers.length === 0) container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Ingen kunder oprettet endnu.</p>';
         }
 
-        // Midlertidig tema-skifter (Flyttes/renses i Opdatering 3)
         function toggleTheme() {
             const body = document.body;
             const currentTheme = body.getAttribute('data-theme');
             body.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');
         }
 
-        // --- INITIALISERING VED START ---
         window.onload = function() {
-            // Sæt standard-dato til i dag på forsiden
             document.getElementById('task-date-input').value = formatDateString(new Date());
-            
             updateCustomerDropdowns();
             renderActiveTasks();
             renderCustomers();

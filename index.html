@@ -202,7 +202,7 @@
         .cal-day.has-past { color: var(--danger); font-weight: 700; }
         .cal-day.selected { border: 2px solid var(--accent); }
 
-        /* Bund-navigation (Opdateret til 2 rene knapper) */
+        /* Bund-navigation (Værktøj & Indstillinger) */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -216,10 +216,10 @@
 
         .nav-sub-btn {
             flex: 1;
-            padding: 16px 0;
+            padding: 14px 0;
             border: none;
             background: none;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--text-secondary);
             text-align: center;
@@ -228,7 +228,7 @@
 
         .nav-sub-btn.active { color: var(--accent); }
 
-        /* Liste elementer til indstillinger og menuer (Ren tekst) */
+        /* Liste elementer til indstillinger (Ren tekst) */
         .settings-list div {
             padding: 16px 0;
             border-bottom: 1px solid var(--border);
@@ -254,7 +254,7 @@
 </head>
 <body>
 
-    <div class="top-nav" id="hoved-top-nav">
+    <div class="top-nav">
         <button class="tab-btn active" onclick="switchView('opgaver')">Opgaver</button>
         <button class="tab-btn" onclick="switchView('kalender')">Kalender</button>
         <button class="tab-btn" onclick="switchView('kunder')">Kunder</button>
@@ -270,7 +270,6 @@
         </div>
 
         <div id="view-kalender" class="view">
-            <h2>Kalender</h2>
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <button class="btn btn-secondary" style="width:auto; padding:6px 12px;" onclick="changeMonth(-1)"><-</button>
@@ -307,7 +306,7 @@
         <div id="view-vaerktoejer-menu" class="view">
             <h2>Værktøjer</h2>
             <div class="card settings-list">
-                <div onclick="visUafhaengigBeregner()">Kemiberegner</div>
+                <div onclick="switchView('vaerktoej')">Kemiberegner</div>
                 <div onclick="alert('Fejlsøgning udrulles i næste opdatering')">Fejlsøgning</div>
             </div>
         </div>
@@ -324,10 +323,7 @@
                 </div>
                 <div class="form-group"><label>Nuværende værdi</label><input type="number" step="0.1" id="calc-nu"></div>
                 <div class="form-group"><label>Ønsket værdi</label><input type="number" step="0.1" id="calc-oensk"></div>
-                <div class="row">
-                    <button class="btn btn-primary" onclick="beregnKemiUafhaengig()">Beregn</button>
-                    <button class="btn btn-secondary" onclick="switchSubView('hoved')">Tilbage til menu</button>
-                </div>
+                <button class="btn btn-primary" onclick="beregnKemiUafhaengig()">Beregn</button>
                 <div id="calc-resultat" style="margin-top:14px; font-weight:700; color:var(--accent);"></div>
             </div>
         </div>
@@ -407,14 +403,14 @@
         // Startkonfiguration
         document.documentElement.setAttribute('data-theme', nuvaerendeTema);
 
-        // --- DATO & UGE LOGIK ---
+        // --- DATO & UGE LOGIK (DET SKRUMRENDE OVERBLIK) ---
         function hentIgangvaerendeUge() {
             let iDag = new Date();
-            let dagNummer = iDag.getDay();
+            let dagNummer = iDag.getDay(); // 0 = Søndag, 1 = Mandag...
             
             let mandag = new Date(iDag);
             if (dagNummer === 0) {
-                mandag.setDate(iDag.getDate() - 6);
+                mandag.setDate(iDag.getDate() - 6); // Søndag rykker 6 dage tilbage til sin egen uges mandag
             } else {
                 mandag.setDate(iDag.getDate() - (dagNummer - 1));
             }
@@ -430,14 +426,13 @@
 
         // --- VISNINGS-STYRING ---
         function switchView(viewName) {
-            // Nulstil bunden, hvis vi skifter til topsiderne
-            document.getElementById('sub-btn-hoved').classList.remove('active');
-            document.getElementById('sub-btn-indstillinger').classList.remove('active');
-            document.getElementById('hoved-top-nav').style.display = 'flex'; // Vis topfaner på hovedsiderne
-
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             
+            // Fjern aktiv markering på bundknapper, når der trykkes på en topfane
+            document.querySelectorAll('.nav-sub-btn').forEach(b => b.classList.remove('active'));
+
+            // Find den knap der matcher visningen
             const btnIndex = ['opgaver', 'kalender', 'kunder'].indexOf(viewName);
             if(btnIndex !== -1) document.querySelectorAll('.tab-btn')[btnIndex].classList.add('active');
             
@@ -455,22 +450,14 @@
             
             if(subName === 'hoved') {
                 document.getElementById('sub-btn-hoved').classList.add('active');
-                document.getElementById('hoved-top-nav').style.display = 'none'; // Skjul topfaner i værktøjsmenuen
                 document.getElementById('view-vaerktoejer-menu').classList.add('active');
             } else if(subName === 'indstillinger') {
                 document.getElementById('sub-btn-indstillinger').classList.add('active');
-                document.getElementById('hoved-top-nav').style.display = 'none'; // Skjul topfaner i indstillinger
                 document.getElementById('view-indstillinger').classList.add('active');
             }
         }
 
-        function visUafhaengigBeregner() {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById('view-vaerktoej').classList.add('active');
-            document.getElementById('calc-resultat').innerText = '';
-        }
-
-        // --- KUNDER ---
+        // --- KUNDER: LÅSTE NUMRE & LOGIK ---
         function visOpretKundeForm() { document.getElementById('opret-kunde-form').style.display = 'block'; }
         function skjulOpretKundeForm() { document.getElementById('opret-kunde-form').style.display = 'none'; }
 
@@ -489,7 +476,7 @@
 
             let nyKunde = {
                 id: 'k_' + Date.now(),
-                nummer: genererKundenummer(),
+                nummer: genererKundenummer(), // Genereres og låses for evigt
                 navn: navn,
                 adresse: adresse,
                 tlf: tlf
@@ -500,6 +487,7 @@
             skjulOpretKundeForm();
             bygKundeListe();
             
+            // Tøm felter
             document.getElementById('k-navn').value = '';
             document.getElementById('k-adresse').value = '';
             document.getElementById('k-tlf').value = '';
@@ -517,7 +505,7 @@
             document.getElementById('kunder-liste').innerHTML = html;
         }
 
-        // --- OPGEVER & MODAL ---
+        // --- OPGEVER & GENERERING (FREKVENS/START/SLUT) ---
         function openOpretOpgaveModal(forudfyldtDato = null) {
             document.getElementById('modal-opgave-titel').innerText = 'Opret Opgave';
             document.getElementById('modal-opgave-id').value = '';
@@ -544,7 +532,7 @@
             let kunde = kunder.find(k => k.id === kId);
             if(kunde) {
                 document.getElementById('modal-action-row').style.display = 'flex';
-                document.getElementById('link-maps').href = kunde.adresse ? `http://googleusercontent.com/maps.google.com/?q=${encodeURIComponent(kunde.adresse)}` : '#';
+                document.getElementById('link-maps').href = kunde.adresse ? `https://maps.google.com/?q=${encodeURIComponent(kunde.adresse)}` : '#';
                 document.getElementById('link-tlf').href = kunde.tlf ? `tel:${kunde.tlf}` : '#';
             }
         }
@@ -561,6 +549,7 @@
 
             if(!kId || !startDatoStr) return alert('Kunde og startdato skal vælges');
 
+            // Hvis det er redigering af en eksisterende enkelt-opgave
             if(eksisterendeId) {
                 let opg = opgaver.find(o => o.id === eksisterendeId);
                 if(opg) {
@@ -570,7 +559,9 @@
                     opg.noter = noter;
                 }
             } else {
+                // NY OPRETTELSE (Enkeltstående eller Frekvens-serie)
                 if(!frekvens || !slutDatoStr) {
+                    // Enkeltstående
                     opgaver.push({
                         id: 'o_' + Date.now(),
                         kundeId: kId,
@@ -581,6 +572,7 @@
                         noter: noter
                     });
                 } else {
+                    // Sæsonstyret frekvens med start og slut
                     let nuvaerendeDato = new Date(startDatoStr);
                     let stopDato = new Date(slutDatoStr);
                     let intervalDage = 7;
@@ -615,6 +607,7 @@
         function lukOpgaveDirekteFraForside(opgaveId) {
             let opg = opgaver.find(o => o.id === opgaveId);
             if(opg) {
+                // Hent værdierne direkte fra felterne på forsiden
                 opg.ph = document.getElementById(`ph-${opgaveId}`).value;
                 opg.klor = document.getElementById(`klor-${opgaveId}`).value;
                 opg.noter = document.getElementById(`noter-${opgaveId}`).value;
@@ -624,7 +617,7 @@
             }
         }
 
-        // --- FORSIDE ---
+        // --- BYG FORSIDE (UGENS SKRUMRENDE OVERBLIK) ---
         function bygForside() {
             let uge = hentIgangvaerendeUge();
             let dagsDatoStr = new Date().toISOString().split('T')[0];
@@ -632,7 +625,10 @@
             
             document.getElementById('uge-status').innerText = `Uge-periode: ${uge.start} til ${uge.slut} (I dag er det ${dagensNavn})`;
 
+            // Filtrer så den KUN viser fra dags dato og frem til søndag i den igangværende uge
             let ugensOpgaver = opgaver.filter(o => o.dato >= dagsDatoStr && o.dato <= uge.slut && o.status === 'aktiv');
+            
+            // Sorter efter dato
             ugensOpgaver.sort((a,b) => a.dato.localeCompare(b.dato));
 
             let html = '';
@@ -666,7 +662,7 @@
             document.getElementById('forside-opgaver-liste').innerHTML = html;
         }
 
-        // --- KALENDER ---
+        // --- KALENDER LOGIK (MÅNEDSMATRIX) ---
         function changeMonth(direction) {
             kalenderVisningDato.setMonth(kalenderVisningDato.getMonth() + direction);
             bygKalender();
@@ -682,6 +678,7 @@
             let foersteDagIMdr = new Date(aar, mdr, 1).getDay();
             let antalDageIMdr = new Date(aar, mdr + 1, 0).getDate();
             
+            // Juster til dansk ugestart (Mandag som første dag, JavaScript har Søndag som 0)
             let startTommeFelter = foersteDagIMdr === 0 ? 6 : foersteDagIMdr - 1;
 
             let gridHtml = `
@@ -690,21 +687,25 @@
                 <div class="cal-header">SØ</div>
             `;
 
+            // Tomme felter inden måneden starter
             for(let i=0; i<startTommeFelter; i++) {
                 gridHtml += `<div class="cal-day empty"></div>`;
             }
 
             let dagsDatoStr = new Date().toISOString().split('T')[0];
 
+            // Byg månedens dage
             for(let dag=1; dag<=antalDageIMdr; dag++) {
                 let nuDato = new Date(aar, mdr, dag);
                 let nuDatoStr = nuDato.toISOString().split('T')[0];
                 
+                // Tjek status på opgaver på denne specifikke dag
                 let dagensOpgaver = opgaver.filter(o => o.dato === nuDatoStr);
                 let statusKlasse = '';
                 
                 if(dagensOpgaver.length > 0) {
                     let harAktive = dagensOpgaver.some(o => o.status === 'aktiv');
+                    // Hvis der er uafsluttede opgaver i dag eller fremtiden = grøn. Hvis fortid og lukket = rød.
                     if(harAktive && nuDatoStr >= dagsDatoStr) {
                         statusKlasse = 'has-future';
                     } else {
@@ -734,6 +735,7 @@
             detDiv.style.display = 'block';
             let dagsDatoStr = new Date().toISOString().split('T')[0];
 
+            // Spærring for fortiden: Kun "Opret Opgave" hvis datoen er i dag eller i fremtiden
             if(valgtDatoIKalender >= dagsDatoStr) {
                 opretDiv.innerHTML = `<button class="btn btn-primary" onclick="openOpretOpgaveModal('${valgtDatoIKalender}')">Opret opgave på denne dato</button>`;
             } else {
@@ -759,10 +761,10 @@
             listeDiv.innerHTML = html;
         }
 
-        // --- STEMMESTYRING ---
+        // --- STEMMESTYRING (MIKROFON-INPUT) ---
         function startStemmestyring(feltId) {
             window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!window.SpeechRecognition) return alert("Stemme-input understøttes ikke.");
+            if (!window.SpeechRecognition) return alert("Stemme-input understøttes desværre ikke i denne browser/enhed.");
 
             const recognition = new SpeechRecognition();
             recognition.lang = "da-DK";
@@ -772,14 +774,20 @@
             felt.placeholder = "Lytter... Tal nu.";
             
             recognition.addEventListener('result', e => {
-                const tekst = Array.from(e.results).map(r => r[0]).map(r => r.transcript).join('');
+                const tekst = Array.from(e.results)
+                    .map(result => result[0])
+                    .map(result => result.transcript)
+                    .join('');
+                
                 felt.value = felt.value ? felt.value + " " + tekst : tekst;
+                felt.placeholder = "";
             });
 
+            recognition.addEventListener('end', () => { felt.placeholder = ""; });
             recognition.start();
         }
 
-        // --- KEMIBEREGNER LOGIK ---
+        // --- UAFHÆNGIG KEMIBEREGNER ---
         function beregnKemiUafhaengig() {
             let type = document.getElementById('calc-type').value;
             let nu = parseFloat(document.getElementById('calc-nu').value) || 0;
@@ -787,15 +795,23 @@
             let resDiv = document.getElementById('calc-resultat');
 
             if(type === 'klor') {
-                if(oensk <= nu) { resDiv.innerText = "Ingen klor behøves."; }
-                else { resDiv.innerText = `Tilsæt ca. ${Math.round((oensk - nu) * 30)}g klor pr. 10m³.`; }
+                if(oensk <= nu) { resDiv.innerText = "Ingen klor behøves. Værdien er fin."; }
+                else {
+                    let mangler = oensk - nu;
+                    let gramHensigt = Math.round(mangler * 30); // Standard estimat-metrik
+                    resDiv.innerText = `Tilsæt ca. ${gramHensigt}g klor pr. 10m³ for at hæve værdien.`;
+                }
             } else if(type === 'ph_minus') {
-                if(nu <= oensk) { resDiv.innerText = "pH-værdi er fin."; }
-                else { resDiv.innerText = `Tilsæt ca. ${Math.round((nu - oensk) * 100)}g pH-Minus pr. 10m³.`; }
+                if(nu <= oensk) { resDiv.innerText = "pH er ikke for høj. Intet pH-Minus behøves."; }
+                else {
+                    let forHoej = nu - oensk;
+                    let gramMinus = Math.round(forHoej * 100);
+                    resDiv.innerText = `Tilsæt ca. ${gramMinus}g pH-Minus pr. 10m³ for at sænke værdien.`;
+                }
             }
         }
 
-        // --- BACKUP & INDSTILLINGER ---
+        // --- INDSTILLINGER & VEDLIGEHOLDELSE ---
         function toggleTema() {
             nuvaerendeTema = (nuvaerendeTema === 'dark') ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', nuvaerendeTema);
@@ -803,7 +819,8 @@
         }
 
         function lavBackup() {
-            let blob = new Blob([JSON.stringify({ kunder: kunder, opgaver: opgaver })], {type: "application/json"});
+            let data = { kunder: kunder, opgaver: opgaver };
+            let blob = new Blob([JSON.stringify(data)], {type: "application/json"});
             let a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
             a.download = `pool_backup_${new Date().toISOString().split('T')[0]}.json`;
@@ -815,11 +832,47 @@
             input.type = 'file';
             input.accept = '.json';
             input.onchange = e => {
+                let file = e.target.files[0];
                 let reader = new FileReader();
-                reader.onload = re => {
+                reader.onload = readerEvent => {
                     try {
-                        let data = JSON.parse(re.target.result);
+                        let data = JSON.parse(readerEvent.target.result);
                         if(data.kunder && data.opgaver) {
-                            kunder = data.kunder; opgaver = data.opgaver;
+                            kunder = data.kunder;
+                            opgaver = data.opgaver;
                             localStorage.setItem('pool_kunder', JSON.stringify(kunder));
                             localStorage.setItem('pool_opgaver', JSON.stringify(opgaver));
+                            alert('Backup gendannet fejlfrit!');
+                            bygForside();
+                        } else { alert('Fejl: Forkert filformat.'); }
+                    } catch(err) { alert('Kunne ikke læse filen.'); }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // --- NULSTILLINGER MED ADVARSLER ---
+        function nulstilKundenumreMedAdvarsel() {
+            if(confirm("Er du absolut sikker på, at du vil nulstille kundenumrene? Eksisterende kundenumre kan ændre sig, hvis rækkefølgen brydes!")) {
+                kunder.forEach((k, index) => {
+                    let aar = new Date().getFullYear();
+                    k.nummer = `${aar}-${String(index + 1).padStart(3, '0')}`;
+                });
+                localStorage.setItem('pool_kunder', JSON.stringify(kunder));
+                alert("Kundenumre er blevet genberegnet.");
+                bygKundeListe();
+            }
+        }
+
+        function nulstilAppMedAdvarsel() {
+            if(confirm("Er du sikker på, at du vil genstarte appen? Ingen data slettes, systemet indlæser blot alt på ny.")) {
+                window.location.reload();
+            }
+        }
+
+        // Første opstart af forsiden
+        bygForside();
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v51</title>
+    <title>Pool Service App v51 - Opdateret Forside</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' fill='%23115d75'/><text x='50%25' y='55%25' font-family='Arial Black, sans-serif' font-weight='900' font-size='16' fill='%23ffffff' text-anchor='middle'>DIN POOLMAND</text><line x1='20' y1='115' x2='160' y2='115' stroke='%23ffffff' stroke-width='3'/></svg>">
@@ -87,7 +87,7 @@
 
 <div class="container">
     <div id="side-opgaver" class="sektion" style="display: block;">
-        <h2>📋 Opgaver</h2>
+        <h2>📋 Opgaver (Denne uge)</h2>
         <div class="sorterings-cluster">
             <button id="sort-opg-dato-toggle" onclick="toggleDatoSortering()" class="sort-btn active">📅 Dato (Nærmeste)</button>
             <button id="sort-opg-afstand" onclick="setOpgaveSortering('afstand')" class="sort-btn">📍 Afstand (GPS)</button>
@@ -380,8 +380,6 @@
         if(fundetPnr) document.getElementById('hus-postnr').value = fundetPnr;
     }
     
-    startGpsOvervaagning();
-
     function startGpsOvervaagning() {
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(pos => {
@@ -456,10 +454,47 @@
 
     function bygOpgaveliste() {
         let b = document.getElementById('liste-beholder'); if(!b) return; b.innerHTML = '';
+        
+        // DATO & UGE LOGIK (PUNKT 1)
+        let nu = new Date();
+        let iDagStreng = nu.toISOString().split('T')[0];
+        
+        // Find mandag i denne uge
+        let dagNummer = nu.getDay(); // 0 = Søndag, 1 = Mandag...
+        let diffTilMandag = nu.getDate() - dagNummer + (dagNummer === 0 ? -6 : 1);
+        let mandag = new Date(nu.setDate(diffTilMandag));
+        mandag.setHours(0,0,0,0);
+        
+        // Find søndag i denne uge
+        let soendag = new Date(mandag);
+        soendag.setDate(mandag.getDate() + 6);
+        soendag.setHours(23,59,59,999);
+
+        let ugeDageStatus = [];
+        for (let i = 0; i < 7; i++) {
+            let d = new Date(mandag);
+            d.setDate(mandag.getDate() + i);
+            ugeDageStatus.push(d.toISOString().split('T')[0]);
+        }
+
+        // Tjek for uafsluttede opgaver i fortiden, og flyt dem til d.d. (og marker med rød border)
+        let harLavetAendring = false;
+        opgaver.forEach(o => {
+            if (o.dato < iDagStreng) {
+                o.dato = iDagStreng;
+                o._uafsluttetFlyttet = true; // Sætter flag til rød kant
+                harLavetAendring = true;
+            }
+        });
+        if (harLavetAendring) {
+            gemAltTilHukommelse();
+        }
+
         if(opgaver.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Ingen aktive opgaver.</p>'; return; }
         
         let listeKopi = JSON.parse(JSON.stringify(opgaver)); 
         
+        // Beregn afstande på kopien
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
             if(hus) {
@@ -468,6 +503,16 @@
             } else { o._afstand = null; }
         });
 
+        // Filtrer forsiden: SKAL VÆRE i denne uge, og MÅ IKKE være ældre end i dag (Skrumper dag for dag)
+        listeKopi = listeKopi.filter(o => {
+            let matcherUgen = (o.dato >= ugeDageStatus[0] && o.dato <= ugeDageStatus[6]);
+            let erIkkeFortid = (o.dato >= iDagStreng);
+            return matcherUgen && erIkkeFortid;
+        });
+
+        if(listeKopi.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Ugens liste er tom!</p>'; return; }
+
+        // Sortering
         if(opgaveSortering === 'dato-asc') { 
             listeKopi.sort((x,y) => new Date(x.dato) - new Date(y.dato)); 
         } else if(opgaveSortering === 'dato-desc') { 
@@ -498,8 +543,6 @@
             }
         }
 
-        let iDagStreng = new Date().toISOString().split('T')[0];
-
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
             let adresseVisning = hus ? hus.adresse : "Ukendt hus";
@@ -508,11 +551,12 @@
             let afstStr = (o._afstand !== null && o._afstand !== undefined) ? `📍 ${o._afstand.toFixed(1)} km` : `📍 -- km`;
             let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
             
+            // Sæt kanten baseret på logik-reglerne
             let kantKlasse = "";
-            if(o.dato === iDagStreng) {
-                kantKlasse = "opg-i-dag";
-            } else if(o.dato < iDagStreng) {
-                kantKlasse = "opg-overskredet";
+            if (o._uafsluttetFlyttet || o.dato < iDagStreng) {
+                kantKlasse = "opg-overskredet"; // Rød kant for medbragte uafsluttede opgaver
+            } else if (o.dato === iDagStreng) {
+                kantKlasse = "opg-i-dag"; // Grøn kant for normale opgaver i dag
             }
 
             b.innerHTML += `
@@ -1215,7 +1259,7 @@
                     </tbody>
                 </table>
                 <div style="margin-top: 40px; background: #f9fafb; padding: 15px; border-radius: 6px; font-size: 13px;">
-                    <strong>Bakmærkning:</strong> Beløbet er registreret som modtaget via MobilePay. Tak for handlen!
+                    <strong>Bakmærkning:</strong> Beløbet is registreret som modtaget via MobilePay. Tak for handlen!
                 </div>
                 <div class="footer">Din Poolmand • Mobil: 28 68 88 98 • MobilePay: 28 68 88 98</div>
                 <script>window.onload = function() { window.print(); };<\/script>
@@ -1227,7 +1271,7 @@
     
     function aabenKortNavigation() {
         let adr = document.getElementById('m-adresse').innerText;
-        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}`, '_blank');
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}&travelmode=driving`, '_blank');
     }
 
     function beregnKemi() {
@@ -1296,7 +1340,7 @@
                     alert("Fejl: Filen indeholder ikke gyldig app-data.");
                 }
             } catch (err) {
-                alert("Kunne ikke læse filen. Sørg for det er en rigtig .json backup-fil.");
+                alert("Kunne ikke læse filen. Sørg for det er en rigtid .json backup-fil.");
             }
         };
         r.readAsText(fil);
@@ -1314,7 +1358,7 @@
         if(o) { o.udfoertRapport = document.getElementById('m-adhoc-udfoert-tekst').value; gemAltTilHukommelse(); }
     }
     function haardNulstilApp() {
-        if(confirm("BEMÆRK: This sletter alt data i appen permanent! Er du sikker?")) {
+        if(confirm("BEMÆRK: Dette sletter alt data i appen permanent! Er du sikker?")) {
             localStorage.clear(); window.location.reload();
         }
     }

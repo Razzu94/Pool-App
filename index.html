@@ -320,6 +320,14 @@
             </div>
         </div>
 
+        <div id="view-vaerktoejer-menu" class="view">
+            <h2>Værktøjer</h2>
+            <div class="card settings-list">
+                <div onclick="switchView('vaerktoej')">Kemiberegner</div>
+                <div onclick="alert('Fejlsøgning udrulles i næste opdatering')">Fejlsøgning</div>
+            </div>
+        </div>
+
         <div id="view-indstillinger" class="view">
             <h2>Indstillinger</h2>
             <div class="card settings-list">
@@ -398,14 +406,14 @@
 
         // --- DATO & UGE LOGIK (DET SKRUMRENDE OVERBLIK) ---
         function hentIgangvaerendeUge() {
-            let i Dag = new Date();
-            let dagNummer = i Dag.getDay(); // 0 = Søndag, 1 = Mandag...
+            let iDag = new Date();
+            let dagNummer = iDag.getDay(); // 0 = Søndag, 1 = Mandag...
             
-            let mandag = new Date(i Dag);
+            let mandag = new Date(iDag);
             if (dagNummer === 0) {
-                mandag.setDate(i Dag.getDate() - 6); // Søndag rykker 6 dage tilbage til sin egen uges mandag
+                mandag.setDate(iDag.getDate() - 6); // Søndag rykker 6 dage tilbage til sin egen uges mandag
             } else {
-                mandag.setDate(i Dag.getDate() - (dagNummer - 1));
+                mandag.setDate(iDag.getDate() - (dagNummer - 1));
             }
             
             let soendag = new Date(mandag);
@@ -435,9 +443,12 @@
 
         function switchSubView(subName) {
             document.querySelectorAll('.nav-sub-btn').forEach(b => b.classList.remove('active'));
+            
             if(subName === 'hoved') {
                 document.getElementById('sub-btn-hoved').classList.add('active');
-                switchView('opgaver');
+                // Åbner den nye værktøjsmenu i stedet for forsiden direkte
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+                document.getElementById('view-vaerktoejer-menu').classList.add('active');
             } else {
                 document.getElementById(`sub-btn-${subName}`).classList.add('active');
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -842,6 +853,7 @@
             input.click();
         }
 
+        // --- NULSTILLINGER MED ADVARSLER ---
         function nulstilKundenumreMedAdvarsel() {
             if(confirm("Er du absolut sikker på, at du vil nulstille kundenumrene? Eksisterende kundenumre kan ændre sig, hvis rækkefølgen brydes!")) {
                 kunder.forEach((k, index) => {

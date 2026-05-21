@@ -2,11 +2,11 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v50</title>
+    <title>Pool Service App v51</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <link rel="apple-touch-icon" href="https://i.ibb.co/68v08qg/din-poolmand-logo.png">
-    <link rel="icon" type="image/png" href="https://i.ibb.co/68v08qg/din-poolmand-logo.png">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' fill='%23115d75'/><text x='50%25' y='55%25' font-family='Arial Black, sans-serif' font-weight='900' font-size='16' fill='%23ffffff' text-anchor='middle'>DIN POOLMAND</text><line x1='20' y1='115' x2='160' y2='115' stroke='%23ffffff' stroke-width='3'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' fill='%23115d75'/><text x='50%25' y='55%25' font-family='Arial Black, sans-serif' font-weight='900' font-size='16' fill='%23ffffff' text-anchor='middle'>DIN POOLMAND</text><line x1='20' y1='115' x2='160' y2='115' stroke='%23ffffff' stroke-width='3'/></svg>">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -308,7 +308,7 @@
             </div>
 
             <div id="m-sms-note-ramme-kontrol" class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:15px;">
-                <label style="color:#facc15; font-weight:bold;">✉️ Note direkte til SMS-kvitteringen</label>
+                <label style="color:#facc15; font-weight:bold;">✉️ Note direkte to SMS-kvitteringen</label>
                 <textarea id="m-sms-note" rows="2" placeholder="Skriv en besked direkte til husejeren her..."></textarea>
             </div>
         </div>
@@ -410,7 +410,7 @@
         return {lat: 54.7675, lng: 11.8739}; 
     }
 
-    function beregnAfstandKm(lat1, lon1, lat2, lon2) {
+    function bgeregnAfstandKm(lat1, lon1, lat2, lon2) {
         if (!lat1 || !lon1 || !lat2 || !lon2) return null;
         let R = 6371; let dLat = (lat2-lat1) * Math.PI / 180; let dLon = (lon2-lon1) * Math.PI / 180;
         let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
@@ -462,7 +462,7 @@
             let hus = kartotek.find(h => h.id === o.kartotekId);
             if(hus) {
                 let lok = estimerKoordinater(hus.postnr, hus.adresse);
-                o._afstand = (brugerLat && brugerLng) ? beregnAfstandKm(brugerLat, brugerLng, lok.lat, lok.lng) : null;
+                o._afstand = (brugerLat && brugerLng) ? bgeregnAfstandKm(brugerLat, brugerLng, lok.lat, lok.lng) : null;
             } else { o._afstand = null; }
         });
 
@@ -496,7 +496,6 @@
             }
         }
 
-        // HENT IDAGS DATO FOR SAMMENLIGNING AF KANTER
         let iDagStreng = new Date().toISOString().split('T')[0];
 
         listeKopi.forEach(o => {
@@ -507,12 +506,11 @@
             let afstStr = (o._afstand !== null && o._afstand !== undefined) ? `📍 ${o._afstand.toFixed(1)} km` : `📍 -- km`;
             let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
             
-            // LOGIK FOR VISUELLE FARVE-KANTER
             let kantKlasse = "";
             if(o.dato === iDagStreng) {
-                kantKlasse = "opg-i-dag"; // Grøn kant for i dag
+                kantKlasse = "opg-i-dag";
             } else if(o.dato < iDagStreng) {
-                kantKlasse = "opg-overskredet"; // Rød kant hvis overskredet
+                kantKlasse = "opg-overskredet";
             }
 
             b.innerHTML += `
@@ -693,7 +691,6 @@
         } else if(o.type === "Lindetpakker") {
             document.getElementById('opret-opg-lindet-antal').value = o.lindetAntal || "1";
         }
-        visSide('side-rediger-opgave'); // Sikrer korrekt fane
         visSide('side-opret-opgave');
     }
 
@@ -797,7 +794,6 @@
         document.getElementById('hus-id-skjult').value = h.id;
         document.getElementById('hus-skema-titel').innerText = "✏️ Rediger Kunde";
         
-        // VIS HURTIG OPRET-KNAP PÅ KUNDEN
         let gBtn = document.getElementById('genvej-opret-opg-btn');
         if(gBtn) gBtn.style.display = 'block';
 
@@ -811,7 +807,6 @@
         styreHusStaerrelseFelter(); visSide('side-opret-hus');
     }
 
-    // GENVEJSFUNKTION FRA KARTOTEK TIL OPGAVE
     function genvejHusTilOpgave() {
         let hId = document.getElementById('hus-id-skjult').value; if(!hId) return;
         aabenOpretOpgaveSide();
@@ -848,7 +843,6 @@
         if(hus.note) nRamme.innerHTML += `<div style="background:rgba(56,189,248,0.15); border-left:4px solid #38bdf8; padding:8px; margin-bottom:5px; font-size:13px; color:white;"><strong>🏠 Fast note:</strong> ${hus.note}</div>`;
         if(o.note) nRamme.innerHTML += `<div style="background:rgba(250,204,21,0.15); border-left:4px solid #facc15; padding:8px; font-size:13px; color:white;"><strong>📝 Opgave note:</strong> ${o.note}</div>`;
 
-        // OPGRADERET OPGAVE-INFO VINDUE MED EJER 1 FLYTTET I BOXEN, PLACERING OG KLIKBART CODES
         document.getElementById('m-navn').innerText = hus.adresse;
         document.getElementById('m-ejer-navn').innerText = hus.ejerNavn || "-";
         document.getElementById('m-type').innerText = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel}` : (o.type === "Lindetpakker" ? "Udbringning af Linnedpakker" : o.type);
@@ -857,7 +851,6 @@
         document.getElementById('m-nogle-placering').innerText = hus.placering ? `(${hus.placering})` : "";
         document.getElementById('m-dato-visning').innerText = o.dato || "-";
         
-        // GØR TILLIGE TELEFONNUMMER KLIKBART
         let tLink = document.getElementById('m-telefon-link');
         if(hus.telefon) {
             tLink.innerText = hus.telefon;
@@ -884,7 +877,6 @@
         let hasKemi = (o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning" || o.type.startsWith("Spakontrol"));
         document.getElementById('kemi-sektion').style.display = hasKemi ? 'block' : 'none';
         
-        // KEMI-HUKOMMELSE LOGIK: Hent automatisk målingerne ind fra forrige besøg
         if(hasKemi) {
             let sidsteBesøg = [...historik]
                 .reverse()
@@ -931,7 +923,6 @@
         document.getElementById('opgave-modal').style.display = 'flex';
     }
 
-    // UDRULNING AF KEMI-HISTORIK (DE SIDSTE 5 OPGAUER PÅ HUSET)
     function toggleVisKemiHistorik() {
         let boks = document.getElementById('m-kemi-historik-udrul');
         if(boks.style.display === 'block') {
@@ -1021,7 +1012,7 @@
         if(o.type === "Poolkontrol") { basisPris = 400; }
         else if(o.type === "Poolkontrol + Bundsugning") { basisPris = 600; }
         else if(o.type === "Spakontrol") { basisPris = 300; }
-        else if(o.type === "Spakontrol + Skift av vand") { basisPris = 600; }
+        else if(o.type === "Spakontrol + Skift af vand") { basisPris = 600; }
         else if(o.type === "Spakontrol + Pipecleaner") { basisPris = 1000; }
         else if(o.type === "Lindetpakker") {
             basisPris = 150; prisLabel = "Udbringningsgebyr";
@@ -1126,7 +1117,7 @@
             indhold += `<strong>🛠️ Internt notefelt / Rapport:</strong><br><span style="color:#60a5fa;">"${h.internRapport}"</span><hr style="border-color:#444;">`;
         }
         if(h.noteTilSms) {
-            indhold += `<strong>✉️ Note sendt to ejer:</strong><br><span style="color:#facc15;">"${h.noteTilSms}"</span><hr style="border-color:#444;">`;
+            indhold += `<strong>✉️ Note sendt til ejer:</strong><br><span style="color:#facc15;">"${h.noteTilSms}"</span><hr style="border-color:#444;">`;
         }
         
         indhold += `<strong>💰 Regning:</strong><br>• ${h.prisLabel}: ${h.basisPris} kr.<br>`;
@@ -1222,7 +1213,7 @@
                     </tbody>
                 </table>
                 <div style="margin-top: 40px; background: #f9fafb; padding: 15px; border-radius: 6px; font-size: 13px;">
-                    <strong>Bemærkning:</strong> Beløbet er registreret som modtaget via MobilePay. Tak for handlen!
+                    <strong>Bakmærkning:</strong> Beløbet er registreret som modtaget via MobilePay. Tak for handlen!
                 </div>
                 <div class="footer">Din Poolmand • Mobil: 28 68 88 98 • MobilePay: 28 68 88 98</div>
                 <script>window.onload = function() { window.print(); };<\/script>
@@ -1234,7 +1225,7 @@
     
     function aabenKortNavigation() {
         let adr = document.getElementById('m-adresse').innerText;
-        window.open(`https://maps.google.com/?q=${encodeURIComponent(adr)}&travelmode=driving`, '_blank');
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}&travelmode=driving`, '_blank');
     }
 
     function beregnKemi() {
@@ -1262,13 +1253,12 @@
         document.getElementById('res-phplus').innerText = phplus;
     }
 
-    // LØSNING B BACKUP DOWNLOAD AUTOMATION
     function eksporterSikkerhedskopi() {
         let samletEksportData = {
             kartotek: kartotek,
             opgaver: opgaver,
             historik: historik,
-            version: 50,
+            version: 51,
             eksporteretDato: new Date().toISOString()
         };
         
@@ -1285,7 +1275,6 @@
         downloadAnker.remove();
     }
 
-    // IMPORTER BACKUP-FIL
     function importerSikkerhedskopi(event) {
         let fil = event.target.files[0]; if (!fil) return;
         let r = new FileReader();

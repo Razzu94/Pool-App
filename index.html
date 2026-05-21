@@ -2,877 +2,1325 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Poolmesteren - Pro V2</title>
+    <title>Pool Service App v51</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' fill='%23115d75'/><text x='50%25' y='55%25' font-family='Arial Black, sans-serif' font-weight='900' font-size='16' fill='%23ffffff' text-anchor='middle'>DIN POOLMAND</text><line x1='20' y1='115' x2='160' y2='115' stroke='%23ffffff' stroke-width='3'/></svg>">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' fill='%23115d75'/><text x='50%25' y='55%25' font-family='Arial Black, sans-serif' font-weight='900' font-size='16' fill='%23ffffff' text-anchor='middle'>DIN POOLMAND</text><line x1='20' y1='115' x2='160' y2='115' stroke='%23ffffff' stroke-width='3'/></svg>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <style>
-        :root {
-            --bg-primary: #ffffff;
-            --bg-secondary: #f5f5f7;
-            --text-primary: #1d1d1f;
-            --text-secondary: #86868b;
-            --accent: #0071e3;
-            --success: #34c759;
-            --danger: #ff3b30;
-            --border: #d2d2d7;
-            --card-bg: #ffffff;
-        }
+        body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; padding: 15px; padding-top: 80px; padding-bottom: 120px; margin: 0; }
+        .container { max-width: 450px; margin: 0 auto; }
+        .sektion { background: #1e1e1e; border: 1px solid #333; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: none; }
+        h2 { color: white; margin-top: 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .top-bar { position: fixed; top: 0; left: 0; right: 0; background: #000; padding: 10px; text-align: center; border-bottom: 1px solid #222; z-index: 90; display: flex; justify-content: center; gap: 5px; }
+        .btn-nav { background: #374151; color: #d1d5db; border: none; padding: 10px 8px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; max-width: 100px; text-align: center; }
+        .btn-nav.active { background: #2563eb; color: white; }
+        .card { background: #2a2a2a; border: 1px solid #444; padding: 12px; margin: 10px 0; border-radius: 8px; cursor: pointer; text-align: left; position: relative; }
+        
+        /* VISUELLE KANTER BASERET PÅ TIDSKRAV */
+        .card.opg-i-dag { border: 2px solid #16a34a !important; box-shadow: 0 0 5px rgba(22,163,74,0.3); }
+        .card.opg-overskredet { border: 2px solid #dc2626 !important; box-shadow: 0 0 5px rgba(220,38,38,0.3); }
 
-        [data-theme="dark"] {
-            --bg-primary: #000000;
-            --bg-secondary: #1c1c1e;
-            --text-primary: #f5f5f7;
-            --text-secondary: #8e8e93;
-            --accent: #0a84ff;
-            --success: #30d158;
-            --danger: #ff453a;
-            --border: #38383a;
-            --card-bg: #1c1c1e;
-        }
+        .card-actions { position: absolute; right: 10px; top: 12px; display: flex; gap: 10px; z-index: 10; }
+        .action-btn { background: none; border: none; font-size: 16px; cursor: pointer; width: auto; margin: 0; padding: 2px; }
+        .form-group { margin-bottom: 12px; text-align: left; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .radio-group { display: flex; gap: 15px; background: #2a2a2a; padding: 10px; border-radius: 6px; border: 1px solid #444; margin-top: 4px; }
+        .radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .radio-item input { width: auto; cursor: pointer; }
+        .checkbox-group { display: flex; gap: 20px; padding: 5px 0; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+        .checkbox-item input { width: auto; transform: scale(1.2); cursor: pointer; }
+        .sorterings-cluster { background: #222; padding: 8px; border-radius: 6px; margin-bottom: 12px; display: flex; flex-wrap: wrap; gap: 5px; }
+        .sort-btn { background: #4b5563; color: white; border: none; padding: 6px 10px; font-size: 11px; border-radius: 4px; cursor: pointer; flex: 1; min-width: 80px; text-align: center; }
+        .sort-btn.active { background: #2563eb; }
+        label { display: block; color: #9ca3af; font-size: 12px; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; box-sizing: border-box; background-color: #2a2a2a; border: 1px solid #444; color: white; padding: 10px; border-radius: 6px; font-size: 14px; }
+        button { background: #2563eb; color: white; padding: 12px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .btn-annuller { background: #4b5563; }
+        .btn-start { background: #2563eb; }
+        .btn-afslut { background: #16a34a; }
+        .btn-maps { background: #0284c7; margin-bottom: 5px; }
+        .btn-slet { background: #dc2626; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; padding: 15px; z-index: 100; }
+        .modal-content { background: #1e1e1e; border: 1px solid #444; width: 100%; max-width: 380px; border-radius: 10px; padding: 20px; text-align: left; }
+        .info-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; line-height: 1.5; }
+        .kemi-resultat { background: #111827; border-left: 4px solid #2563eb; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 14px; line-height: 1.5; }
+        .badge-status { float: right; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+        .status-ej-betalt { background: #7f1d1d; color: #fca5a5; }
+        .status-betalt { background: #14532d; color: #4ade80; }
+        .note-visning { color: #facc15; font-size: 12px; margin-top: 4px; font-style: italic; background: rgba(250,204,21,0.1); padding: 3px 6px; border-radius: 4px; display: inline-block; }
+        .omk-liste-item { background: #333; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-top: 4px; display: flex; justify-content: space-between; }
+        .img-preview { max-width: 100%; max-height: 150px; margin-top: 8px; border-radius: 6px; border: 1px solid #555; display: block; }
+        
+        /* REGNSKAB STYLES */
+        .regnskab-box { background: #262626; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+        .regnskab-linje { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #333; font-size: 14px; }
+        .regnskab-linje:last-child { border-bottom: none; }
+        .moms-bjaelke { text-align: center; font-size: 24px; font-weight: bold; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .moms-groen { background: rgba(22, 163, 74, 0.2); color: #4ade80; border: 2px solid #16a34a; }
+        .moms-roed { background: rgba(220, 38, 38, 0.2); color: #f87171; border: 2px solid #dc2626; }
+        .moms-advarsel-tekst { color: #f87171; font-weight: bold; text-align: center; margin-top: -10px; margin-bottom: 15px; font-size: 14px; }
+        .til-gode-item { font-size: 13px; color: #cbd5e1; padding: 4px 0; border-bottom: 1px dashed #444; display: flex; justify-content: space-between; }
+        .kvittering-mini-card { background: #2a2a2a; border: 1px solid #444; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
+        /* KEMI HISTORIK POPUP BOX */
+        .kemi-historik-boks { background: #111; border: 1px solid #444; padding: 10px; border-radius: 6px; margin: 10px 0; display: none; font-size: 12px; line-height: 1.5; }
 
-        body {
-            background-color: var(--bg-secondary);
-            color: var(--text-primary);
-            padding-bottom: 75px;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        /* Top Navigation / Faner */
-        .top-nav {
-            position: sticky;
-            top: 0;
-            background-color: var(--bg-primary);
-            display: flex;
-            border-bottom: 1px solid var(--border);
-            z-index: 100;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 16px 0;
-            border: none;
-            background: none;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-align: center;
-            cursor: pointer;
-        }
-
-        .tab-btn.active {
-            color: var(--accent);
-            border-bottom: 2px solid var(--accent);
-        }
-
-        /* Hovedindhold */
-        .container {
-            padding: 16px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .view {
-            display: none;
-        }
-
-        .view.active {
-            display: block;
-        }
-
-        /* Kort / Elementer */
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border);
-        }
-
-        h2 {
-            font-size: 20px;
-            margin-bottom: 16px;
-            font-weight: 700;
-        }
-
-        /* Formularer og felter */
-        .form-group {
-            margin-bottom: 14px;
-        }
-
-        label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: var(--text-secondary);
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            font-size: 16px;
-            outline: none;
-        }
-
-        .row {
-            display: flex;
-            gap: 10px;
-        }
-
-        /* Knapper */
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 8px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: center;
-            display: inline-block;
-        }
-
-        .btn-primary { background-color: var(--accent); color: white; }
-        .btn-success { background-color: var(--success); color: white; }
-        .btn-danger { background-color: var(--danger); color: white; }
-        .btn-secondary { background-color: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
-
-        /* Ikon-genveje i marken */
-        .action-row {
-            display: flex;
-            gap: 12px;
-            margin: 12px 0;
-        }
-
-        .icon-btn {
-            flex: 1;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background-color: var(--bg-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        /* Kalender Matrix */
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 13.5%);
-            gap: 1%;
-            text-align: center;
-            margin-top: 10px;
-        }
-
-        .cal-header {
-            font-weight: 600;
-            font-size: 12px;
-            color: var(--text-secondary);
-            padding: 5px 0;
-        }
-
-        .cal-day {
-            padding: 10px 0;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 50%;
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--text-primary);
-        }
-
-        .cal-day.empty { cursor: default; }
-        .cal-day.has-future { color: var(--success); font-weight: 700; }
-        .cal-day.has-past { color: var(--danger); font-weight: 700; }
-        .cal-day.selected { border: 2px solid var(--accent); }
-
-        /* Bund-navigation (Værktøj & Indstillinger) */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--bg-primary);
-            border-top: 1px solid var(--border);
-            display: flex;
-            z-index: 100;
-        }
-
-        .nav-sub-btn {
-            flex: 1;
-            padding: 14px 0;
-            border: none;
-            background: none;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-align: center;
-            cursor: pointer;
-        }
-
-        .nav-sub-btn.active { color: var(--accent); }
-
-        /* Liste elementer til indstillinger (Ren tekst) */
-        .settings-list div {
-            padding: 16px 0;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .settings-list div:last-child { border-bottom: none; }
-
-        /* Taleboblestatus eller mikrofondesign */
-        .voice-input-wrapper {
-            position: relative;
-        }
-        .voice-btn {
-            position: absolute;
-            right: 10px;
-            top: 38px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 18px;
-        }
+        /* FAST APP LOGO I BUNDEN */
+        .bund-logo-container { position: fixed; bottom: 0; left: 0; right: 0; background: #121212; padding: 15px 0; display: flex; justify-content: center; z-index: 80; pointer-events: none; }
+        .poolmand-logo-kort { background-color: #115d75; width: 180px; height: 95px; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .logo-tekst { color: #ffffff; font-family: 'Arial Black', Impact, sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 0.5px; margin: 0; padding: 0; padding-bottom: 4px; border-bottom: 3px solid #ffffff; line-height: 1; width: 80%; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div class="top-nav">
-        <button class="tab-btn active" onclick="switchView('opgaver')">Opgaver</button>
-        <button class="tab-btn" onclick="switchView('kalender')">Kalender</button>
-        <button class="tab-btn" onclick="switchView('kunder')">Kunder</button>
+<div class="top-bar">
+    <button id="btn-nav-opg" onclick="visSide('side-opgaver')" class="btn-nav active">📋 Opgaver</button>
+    <button id="btn-nav-kar" onclick="visSide('side-kartotek')" class="btn-nav">🏠 Kunder</button>
+    <button id="btn-nav-his" onclick="visSide('side-historik')" class="btn-nav">📜 Historik</button>
+    <button id="btn-nav-reg" onclick="visSide('side-regnskab')" class="btn-nav">📊 Regnskab</button>
+</div>
+
+<div class="container">
+    <div id="side-opgaver" class="sektion" style="display: block;">
+        <h2>📋 Opgaver</h2>
+        <div class="sorterings-cluster">
+            <button id="sort-opg-dato-toggle" onclick="toggleDatoSortering()" class="sort-btn active">📅 Dato (Nærmeste)</button>
+            <button id="sort-opg-afstand" onclick="setOpgaveSortering('afstand')" class="sort-btn">📍 Afstand (GPS)</button>
+        </div>
+        <div id="liste-beholder"></div>
+        <button onclick="aabenOpretOpgaveSide()">➕ Opret Ny Opgave</button>
+        
+        <div style="margin-top: 35px; border-top: 1px dashed #444; padding-top: 15px;">
+            <span style="font-size: 12px; color:#9ca3af; display:block; margin-bottom: 5px; text-align:center;">🔒 Sikkerhedskopiering (Datasikkerhed)</span>
+            <div class="grid-2">
+                <button onclick="eksporterSikkerhedskopi()" style="background:#0284c7; font-size:12px; padding:8px; margin:0;">💾 Tag Backup</button>
+                <button onclick="document.getElementById('import-fil-input').click()" style="background:#4b5563; font-size:12px; padding:8px; margin:0;">📂 Gendan Backup</button>
+            </div>
+            <input type="file" id="import-fil-input" accept=".json" onchange="importerSikkerhedskopi(event)" style="display:none;">
+        </div>
+
+        <button onclick="haardNulstilApp()" class="btn-slet" style="margin-top: 25px; font-size: 11px; padding: 6px;">⚠️ Nulstil app-data ved fejl</button>
     </div>
 
-    <div class="container">
+    <div id="side-kartotek" class="sektion">
+        <h2>🏠 Kundekartotek</h2>
+        <div class="sorterings-cluster">
+            <button id="sort-kar-az" onclick="setKartotekSortering('az')" class="sort-btn active">🔤 Navn A-Å</button>
+            <button id="sort-kar-za" onclick="setKartotekSortering('za')" class="sort-btn">🔤 Navn Å-A</button>
+        </div>
+        <div id="kartotek-beholder"></div>
+        <button onclick="aabenOpretHusSide()" style="background:#16a34a;">🏠 Tilføj Ny Kunde</button>
+    </div>
+
+    <div id="side-historik" class="sektion">
+        <h2>📜 Historik</h2>
+        <div class="sorterings-cluster">
+            <button id="sort-his-nyest" onclick="setHistorikSortering('nyest')" class="sort-btn active">⏱️ Nyeste først</button>
+            <button id="sort-his-aeldst" onclick="setHistorikSortering('aeldst')" class="sort-btn">⏱️ Ældste først</button>
+            <button id="sort-his-az" onclick="setHistorikSortering('az')" class="sort-btn">🔤 Adresse A-Å</button>
+        </div>
+        <div id="historik-beholder"></div>
+    </div>
+
+    <div id="side-regnskab" class="sektion">
+        <h2>📊 Regnskab</h2>
         
-        <div id="view-opgaver" class="view active">
-            <h2>Ugens Opgaver</h2>
-            <div id="uge-status" style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;"></div>
-            <button class="btn btn-primary" style="margin-bottom:16px;" onclick="openOpretOpgaveModal()">+ Opret Ny Opgave</button>
-            <div id="forside-opgaver-liste"></div>
+        <div id="moms-alarm-ramme" class="moms-bjaelke moms-groen">0 kr.</div>
+        <div id="moms-advarsel-label" class="moms-advarsel-tekst" style="display:none;">⚠️ Momsadvarsel</div>
+        
+        <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">💰 Indtjening</h3>
+        <div class="regnskab-box">
+            <div class="regnskab-linje" style="font-weight:bold; color:white;"><span>Total indtjening:</span><span id="reg-total-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>🏊‍♂️ Poolkontroller i alt:</span><span id="reg-pool-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>🛁 Spakontroller i alt:</span><span id="reg-spa-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>📦 Linnedpakker i alt:</span><span id="reg-lindet-indtjening">0 kr.</span></div>
+            <div class="regnskab-linje"><span>🛠️ Ad-hoc opgaver i alt:</span><span id="reg-adhoc-indtjening">0 kr.</span></div>
         </div>
 
-        <div id="view-kalender" class="view">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <button class="btn btn-secondary" style="width:auto; padding:6px 12px;" onclick="changeMonth(-1)"><-</button>
-                    <h3 id="cal-month-title" style="font-size:16px; font-weight:700;"></h3>
-                    <button class="btn btn-secondary" style="width:auto; padding:6px 12px;" onclick="changeMonth(1)">-></button>
-                </div>
-                <div class="calendar-grid" id="calendar-matrix"></div>
-            </div>
-            
-            <div id="kalender-detaljer" style="display:none;">
-                <div id="kalender-opret-sektion"></div>
-                <h3 style="font-size:15px; margin: 12px 0 6px 0;">Opgaver på denne dato:</h3>
-                <div id="kalender-valgt-dato-liste"></div>
-            </div>
+        <h3 style="color:white; font-size:15px; margin-top:15px; margin-bottom:5px;">⏳ Ikke Betalt</h3>
+        <div class="regnskab-box">
+            <div class="regnskab-linje" style="font-weight:bold; color:#facc15; border-bottom:1px solid #444; padding-bottom:8px;"><span>Samlet til gode:</span><span id="reg-total-tilgode">0 kr.</span></div>
+            <div id="reg-tilgode-liste" style="margin-top:5px; max-height:150px; overflow-y:auto;"></div>
         </div>
 
-        <div id="view-kunder" class="view">
-            <h2>Kunder</h2>
-            <button class="btn btn-primary" style="margin-bottom:16px;" onclick="visOpretKundeForm()">+ Opret Ny Kunde</button>
-            
-            <div id="opret-kunde-form" class="card" style="display:none; margin-bottom:16px;">
-                <h3>Ny Kunde</h3>
-                <div class="form-group"><label>Navn</label><input type="text" id="k-navn"></div>
-                <div class="form-group"><label>Adresse</label><input type="text" id="k-adresse"></div>
-                <div class="form-group"><label>Telefon</label><input type="tel" id="k-tlf"></div>
-                <div class="row">
-                    <button class="btn btn-success" onclick="gemNyKunde()">Gem Kunde</button>
-                    <button class="btn btn-secondary" onclick="skjulOpretKundeForm()">Annuller</button>
-                </div>
-            </div>
-            <div id="kunder-liste"></div>
+        <h3 style="color:white; font-size:15px; margin-top:20px; margin-bottom:5px;">🧾 Kvitteringer</h3>
+        <div id="reg-kvitteringer-liste" style="max-height:250px; overflow-y:auto;"></div>
+    </div>
+
+    <div id="side-opret-opgave" class="sektion">
+        <h2 id="opg-skema-titel">➕ Opret Ny Opgave</h2>
+        <input id="opg-id-skjult" type="hidden" value="">
+        <div class="form-group"><label>Kunde / Hus *</label><select id="opret-opg-hus-select" onchange="haandterHusValgIOpgave()"></select></div>
+        <div class="form-group"><label>Dato *</label><input id="opret-opg-dato" type="date"></div>
+        <div class="form-group">
+            <label>Opgavetype</label>
+            <select id="opret-opg-type" onchange="styreOpgaveTypeFelter()"></select>
         </div>
 
-        <div id="view-vaerktoejer-menu" class="view">
-            <h2>Værktøjer</h2>
-            <div class="card settings-list">
-                <div onclick="switchView('vaerktoej')">Kemiberegner</div>
-                <div onclick="alert('Fejlsøgning udrulles i næste opdatering')">Fejlsøgning</div>
-            </div>
-        </div>
-
-        <div id="view-vaerktoej" class="view">
-            <h2>Uafhængig Kemiberegner</h2>
-            <div class="card">
-                <div class="form-group">
-                    <label>Ønsket måling</label>
-                    <select id="calc-type">
-                        <option value="klor">Klorjustering (Hæv)</option>
-                        <option value="ph_minus">pH-Minus</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>Nuværende værdi</label><input type="number" step="0.1" id="calc-nu"></div>
-                <div class="form-group"><label>Ønsket værdi</label><input type="number" step="0.1" id="calc-oensk"></div>
-                <button class="btn btn-primary" onclick="beregnKemiUafhaengig()">Beregn</button>
-                <div id="calc-resultat" style="margin-top:14px; font-weight:700; color:var(--accent);"></div>
-            </div>
-        </div>
-
-        <div id="view-indstillinger" class="view">
-            <h2>Indstillinger</h2>
-            <div class="card settings-list">
-                <div onclick="toggleTema()">Skift tema</div>
-                <div onclick="lavBackup()">Lav backup</div>
-                <div onclick="gendanBackup()">Gendan backup</div>
-                <div onclick="nulstilKundenumreMedAdvarsel()">Nulstil kundenumre</div>
-                <div onclick="nulstilAppMedAdvarsel()">Nulstil/genstart appen</div>
-            </div>
-        </div>
-
-        <div id="opgave-modal" class="card" style="display:none; position:fixed; top:5%; left:5%; width:90%; max-height:85%; overflow-y:auto; z-index:200; box-shadow:0 4px 20px rgba(0,0,0,0.3);">
-            <h3 id="modal-opgave-titel">Opret Opgave</h3>
-            <input type="hidden" id="modal-opgave-id">
-            
+        <div id="opret-adhoc-specifikke-felter" style="display:none; background:rgba(255,255,255,0.03); padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:12px;">
+            <div class="form-group"><label>Opgavens Titel (F.eks. Skift sengeben) *</label><input id="opret-opg-titel" type="text" placeholder="Hvad skal laves?"></div>
             <div class="form-group">
-                <label>Vælg Kunde</label>
-                <select id="modal-opgave-kunde" onchange="opdaterModalAdresseTlf()"></select>
+                <label>Afregningsform</label>
+                <div class="radio-group">
+                    <div class="radio-item"><input type="radio" id="pris-type-time" name="adhoc-pris-type" value="time" checked onclick="styreFastPrisFelt()"> <label for="pris-type-time" style="margin:0;color:white;">Timepris (300 kr./t)</label></div>
+                    <div class="radio-item"><input type="radio" id="pris-type-fast" name="adhoc-pris-type" value="fast" onclick="styreFastPrisFelt()"> <label for="pris-type-fast" style="margin:0;color:white;">Fast pris</label></div>
+                </div>
             </div>
-            
-            <div id="modal-action-row" class="action-row" style="display:none;">
-                <a id="link-maps" class="icon-btn" target="_blank">🗺️ Kort</a>
-                <a id="link-tlf" class="icon-btn">📞 Ring</a>
-            </div>
+            <div class="form-group" id="felt-fast-pris-input-ramme" style="display:none;"><label>Aftalt fast pris (kr.) *</label><input id="opret-opg-fastpris-kroner" type="number" placeholder="F.eks. 500"></div>
+        </div>
 
-            <div class="form-group"><label>Frekvens (Valgfri)</label>
-                <select id="modal-opgave-frekvens">
-                    <option value="">Ingen (Enkeltstående)</option>
-                    <option value="hver_uge">Hver uge</option>
-                    <option value="hver_anden_uge">Hver anden uge</option>
-                    <option value="hver_tredje_uge">Hver tredje uge</option>
-                    <option value="hver_fjerde_uge">Hver fjerde uge</option>
-                </select>
-            </div>
-            <div class="row">
-                <div class="form-group" style="flex:1;"><label>Startdato</label><input type="date" id="modal-opgave-startdato"></div>
-                <div class="form-group" style="flex:1;"><label>Slutdato (Kun ved frekvens)</label><input type="date" id="modal-opgave-slutdato"></div>
-            </div>
-            
-            <div class="row">
-                <div class="form-group" style="flex:1;"><label>pH-værdi</label><input type="number" step="0.1" id="modal-opgave-ph"></div>
-                <div class="form-group" style="flex:1;"><label>Klor-værdi</label><input type="number" step="0.1" id="modal-opgave-klor"></div>
-            </div>
-            
-            <div class="form-group voice-input-wrapper">
-                <label>Interne noter</label>
-                <textarea id="modal-opgave-noter" rows="3"></textarea>
-                <button type="button" class="voice-btn" onclick="startStemmestyring('modal-opgave-noter')">🎙️</button>
-            </div>
-            
-            <div class="row">
-                <button class="btn btn-success" onclick="gemOpgaveFraModal()">Gem</button>
-                <button class="btn btn-secondary" onclick="lukOpgaveModal()">Luk</button>
+        <div id="opret-lindet-specifikke-felter" style="display:none; background:rgba(255,255,255,0.03); padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:12px;">
+            <div class="form-group">
+                <label>Antal Linnedpakker *</label>
+                <input id="opret-opg-lindet-antal" type="number" min="0" value="1" placeholder="F.eks. 2">
+                <small style="color:#9ca3af; font-size:11px; display:block; margin-top:4px;">Udbringning: 150 kr. + 150 kr. pr. pakke.</small>
             </div>
         </div>
 
+        <div class="form-group"><label>Intern note til denne specifikke opgave</label><input id="opret-opg-note" type="text" placeholder="F.eks. Skal tages efter klokken 14:00"></div>
+        <button onclick="gemNyOpgave()">Gem Opgave</button>
+        <button onclick="visSide('side-opgaver')" class="btn-annuller">Annuller</button>
     </div>
 
-    <div class="bottom-nav">
-        <button class="nav-sub-btn" id="sub-btn-hoved" onclick="switchSubView('hoved')">Værktøjer</button>
-        <button class="nav-sub-btn" id="sub-btn-indstillinger" onclick="switchSubView('indstillinger')">Indstillinger</button>
-    </div>
-
-    <script>
-        // Lokale databaser (Offline storage)
-        let kunder = JSON.parse(localStorage.getItem('pool_kunder')) || [];
-        let opgaver = JSON.parse(localStorage.getItem('pool_opgaver')) || [];
-        let nuvaerendeTema = localStorage.getItem('pool_tema') || 'dark';
+    <div id="side-opret-hus" class="sektion">
+        <h2 id="hus-skema-titel">🏠 Tilføj Kunde / Hus</h2>
+        <input id="hus-id-skjult" type="hidden" value="">
+        <div class="form-group"><label>Adresse (Vejnavn og husnummer) *</label><input id="hus-adresse" type="text" placeholder="F.eks. Linnedvænget 9"></div>
         
-        let valgtDatoIKalender = new Date().toISOString().split('T')[0];
-        let kalenderVisningDato = new Date();
+        <div class="grid-2">
+            <div class="form-group"><label>Postnummer</label><input id="hus-postnr" type="number" placeholder="F.eks. 4800" oninput="haandterPostnrInput()"></div>
+            <div class="form-group"><label>By</label><input id="hus-by" type="text" placeholder="F.eks. Nykøbing F" oninput="haandterByInput()"></div>
+        </div>
+        
+        <div class="grid-2">
+            <div class="form-group"><label>Ejer (Navn)</label><input id="hus-ejer-navn" type="text" placeholder="Navn på ejer 1"></div>
+            <div class="form-group"><label>Telefonnummer</label><input id="hus-telefon" type="tel" placeholder="Tlf. ejer 1"></div>
+        </div>
 
-        // Startkonfiguration
-        document.documentElement.setAttribute('data-theme', nuvaerendeTema);
+        <div class="grid-2">
+            <div class="form-group"><label>Ejer 2 (Navn)</label><input id="hus-ejer2-navn" type="text" placeholder="Navn på ejer 2"></div>
+            <div class="form-group"><label>Telefonnummer 2</label><input id="hus-telefon2" type="tel" placeholder="Tlf. ejer 2"></div>
+        </div>
+        
+        <div class="grid-2">
+            <div class="form-group"><label>Nøglekode</label><input id="hus-kode" type="text"></div>
+            <div class="form-group"><label>Placering (Nøgle/Teknikrum)</label><input id="hus-placering" type="text" placeholder="F.eks. Ved bagdøren"></div>
+        </div>
 
-        // --- DATO & UGE LOGIK (DET SKRUMRENDE OVERBLIK) ---
-        function hentIgangvaerendeUge() {
-            let iDag = new Date();
-            let dagNummer = iDag.getDay(); // 0 = Søndag, 1 = Mandag...
+        <div class="form-group"><label>Fast note til dette hus (Vises altid på opgaven)</label><textarea id="hus-note" rows="2" placeholder="F.eks. Bemærk larm fra pumpe..."></textarea></div>
+        
+        <div class="form-group" style="background:#262626; padding:10px; border-radius:6px; border:1px solid #444;">
+            <label style="color:#60a5fa; font-weight:bold; margin-bottom:5px;">Faciliteter på grunden</label>
+            <div class="checkbox-group">
+                <div class="checkbox-item"><input type="checkbox" id="hus-has-pool" onchange="styreHusStaerrelseFelter()"> <label for="hus-has-pool" style="margin:0; color:white;">Pool</label></div>
+                <div class="checkbox-item"><input type="checkbox" id="hus-has-spa" onchange="styreHusStaerrelseFelter()"> <label for="hus-has-spa" style="margin:0; color:white;">Spa</label></div>
+            </div>
+        </div>
+
+        <div class="form-group" id="felt-pool-m3" style="display:none;"><label>Pool størrelse (m³)</label><input id="hus-pool" type="number" value="27"></div>
+        <div class="form-group" id="felt-spa-liter" style="display:none;"><label>Spa størrelse (Liter)</label><input id="hus-spa" type="number" value="1500"></div>
+        
+        <button id="genvej-opret-opg-btn" onclick="genvejHusTilOpgave()" style="background:#2563eb; display:none; margin-bottom:8px;">➕ Opret Opgave</button>
+
+        <button onclick="gemNytHus()" style="background:#16a34a;" id="btn-gem-hus">Gem Kunde</button>
+        <button onclick="visSide('side-kartotek')" class="btn-annuller">Annuller</button>
+    </div>
+</div>
+
+<div class="bund-logo-container">
+    <div class="poolmand-logo-kort">
+        <p class="logo-tekst">DIN POOLMAND</p>
+    </div>
+</div>
+
+<div id="opgave-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+        <h3 id="m-navn" style="margin:0 0 5px 0;color:white;">Adresse</h3>
+        <p id="m-type" style="margin:0 0 15px 0;color:#60a5fa;font-weight:bold;"></p>
+        
+        <div id="m-noter-ramme" style="margin-bottom:10px;"></div>
+
+        <div class="info-box">
+            <p style="margin:2px 0;">👤 Ejer: <strong id="m-ejer-navn" style="color:white;">-</strong></p>
+            <p style="margin:2px 0;">📍 <span id="m-adresse"></span></p>
+            <p style="margin:2px 0;">📅 Dato: <span id="m-dato-visning" style="color:#a3a3a3;"></span></p>
+            <p style="margin:2px 0;">📞 Tlf: <a id="m-telefon-link" href="#" style="color:#38bdf8; font-weight:bold; text-decoration:underline;">-</a></p>
+            <p style="margin:2px 0;">🔑 Kode: <strong id="m-kode" style="color:#facc15;">-</strong> <span id="m-nogle-placering" style="color:#cbd5e1; font-size:12px; margin-left:5px;"></span></p>
+            <p style="margin:2px 0; color:#38bdf8; font-weight:bold;" id="m-stoerrelse-visning">-</p>
+            <p id="m-status" style="margin:5px 0 0 0;font-style:italic;color:#a3a3a3; font-size:12px;"></p>
+        </div>
+
+        <button onclick="toggleVisKemiHistorik()" style="background:#4b5563; padding:6px 10px; font-size:12px; margin-bottom:10px; margin-top:0;">📊 Kemi Historik</button>
+        <div id="m-kemi-historik-udrul" class="kemi-historik-boks"></div>
+        
+        <div id="kemi-sektion" style="display:none; margin-bottom:15px;">
+            <div class="grid-2">
+                <div class="form-group"><label>Målt klor (mg/l)</label><input id="kemi-maalt-klor" type="number" step="0.1" value="1.0" oninput="beregnKemi()"></div>
+                <div class="form-group"><label>Ønsket klor</label><input id="kemi-oensket-klor" type="number" step="0.1" value="6.0" oninput="beregnKemi()"></div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group"><label>Målt pH</label><input id="kemi-maalt-ph" type="number" step="0.1" value="7.0" oninput="beregnKemi()"></div>
+                <div class="form-group"><label>Ønsket pH</label><input id="kemi-oensket-ph" type="number" step="0.1" value="7.0" oninput="beregnKemi()"></div>
+            </div>
             
-            let mandag = new Date(iDag);
-            if (dagNummer === 0) {
-                mandag.setDate(iDag.getDate() - 6); // Søndag rykker 6 dage tilbage til sin egen uges mandag
-            } else {
-                mandag.setDate(iDag.getDate() - (dagNummer - 1));
+            <div class="kemi-resultat">
+                <strong>Intern Dosering:</strong><br>
+                💊 Daytabs: <span id="res-daytabs" style="color: #38bdf8; font-weight: bold;">0</span> stk.<br>
+                🚀 Boost: <span id="res-boost" style="color: #60a5fa; font-weight: bold;">0</span> ml.<br>
+                📉 Antiklor: <span id="res-antiklor" style="color: #ef4444; font-weight: bold;">0</span> ml.<br>
+                ➖ pH-Minus: <span id="res-phminus" style="color: #facc15; font-weight: bold;">0</span> ml.<br>
+                ➕ pH-Plus: <span id="res-phplus" style="color: #4ade80; font-weight: bold;">0</span> ml.
+            </div>
+        </div>
+
+        <div id="lindet-afkryds-sektion" style="display:none; margin-bottom:15px; background:rgba(96,165,250,0.1); padding:12px; border-radius:6px; border:1px solid #3b82f6;">
+            <div class="checkbox-item">
+                <input type="checkbox" id="m-lindet-afkryds" onchange="haandterLindetAfkrydsning()">
+                <label for="m-lindet-afkryds" style="margin:0; color:white; font-weight:bold; font-size:15px; cursor:pointer;">📦 Leveret</label>
+            </div>
+        </div>
+
+        <div id="igang-felter-container" style="display:none;">
+            <div id="m-adhoc-arbejdsrapport-felt" class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:15px; display:none;">
+                <label style="color:#60a5fa; font-weight:bold;">✍️ Internt notefelt / Arbejdsrapport</label>
+                <textarea id="m-adhoc-udfoert-tekst" rows="3" placeholder="Beskriv arbejdet eller tilstanden internt her..."></textarea>
+            </div>
+
+            <div class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:15px;">
+                <label style="color:#4ade80; font-weight:bold;">📸 Tilføj fotodokumentation</label>
+                <input type="file" id="m-foto-input" accept="image/*" onchange="haandterFotoValg()">
+                <img id="m-foto-preview" class="img-preview" style="display:none;" src="">
+            </div>
+
+            <div id="omkostning-sektion" style="background:#2a2a2a; padding:10px; border-radius:6px; margin-bottom:15px; border:1px solid #444;">
+                <label style="color:#60a5fa; font-weight:bold; margin-bottom:5px;">➕ Ekstra omkostninger</label>
+                <div class="grid-2">
+                    <input id="omk-tekst" type="text" placeholder="F.eks. Nyt filter">
+                    <input id="omk-pris" type="number" placeholder="Pris i kr.">
+                </div>
+                <button onclick="tilfoejEkstraOmkostning()" style="background:#4b5563; padding:6px; font-size:12px; margin-top:5px;">➕ Tilføj omkostning</button>
+                <div id="omk-liste-ramme" style="margin-top:8px;"></div>
+            </div>
+
+            <div id="m-sms-note-ramme-kontrol" class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-bottom:15px;">
+                <label style="color:#facc15; font-weight:bold;">✉️ Note direkte to SMS-kvitteringen</label>
+                <textarea id="m-sms-note" rows="2" placeholder="Skriv en besked direkte til husejeren her..."></textarea>
+            </div>
+        </div>
+
+        <button onclick="aabenKortNavigation()" id="btn-maps" class="btn-maps">🗺️ Start Navigation</button>
+        <button id="btn-start" onclick="startTimer()" class="btn-start">▶ Start Opgave</button>
+        
+        <div id="afslut-afsnit" style="display:none; margin-top:10px; border-top:1px solid #444; padding-top:10px;">
+            <button id="btn-hoved-afslut" onclick="afslutOpgave(true)" class="btn-afslut">📲 Afslut & Send SMS-kvittering</button>
+            <button onclick="afslutOpgave(false)" style="background:#0284c7; margin-top:5px;">💾 Kun gem i Historik (Ingen SMS)</button>
+        </div>
+        
+        <button onclick="lukOpgaveModal()" class="btn-annuller">Luk vindue</button>
+    </div>
+</div>
+
+<div id="historik-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+        <h3 style="margin:0 0 10px 0;color:white;">📜 Opgavedetaljer</h3>
+        <div id="historik-detaljer-indhold" style="font-size:14px; line-height:1.6; color:#d1d5db;"></div>
+        <div id="historik-betalings-knap-ramme" style="margin-top:15px; display:flex; gap:10px; flex-direction:column;"></div>
+        <button onclick="document.getElementById('historik-modal').style.display='none'" class="btn-annuller" style="margin-top:10px;">Luk oversigt</button>
+    </div>
+</div>
+
+<script>
+    let kartotek = []; let opgaver = []; let historik = []; let aktivOpgaveId = null;
+    let aktuelM3Mængde = 0; let midlertidigOmkListe = []; let gemtFotoBase64 = null;
+    let brugerLat = null; let brugerLng = null;
+    let opgaveSortering = 'dato-asc'; let kartotekSortering = 'az'; let historikSortering = 'nyest';
+
+    function findByFraPostnr(postnr) {
+        let p = parseInt(postnr); if (isNaN(p)) return "";
+        if (p >= 4800 && p <= 4849) return "Nykøbing F";
+        if (p === 4871) return "Horbelev"; if (p === 4872) return "Idestrup";
+        if (p === 4873) return "Væggerløse"; if (p === 4874) return "Gedser";
+        if (p === 4880) return "Nysted"; if (p >= 4850 && p <= 4869) return "Stubbekøbing";
+        return "";
+    }
+    function findPostnrFraBy(byNavn) {
+        let b = byNavn.toLowerCase().trim();
+        if (b.includes("nykøbing")) return "4800"; if (b.includes("horbelev")) return "4871";
+        if (b.includes("idestrup")) return "4872"; if (b.includes("væggerløse") || b.includes("marielyst")) return "4873";
+        return "";
+    }
+
+    function initialiserData() {
+        try {
+            kartotek = JSON.parse(localStorage.getItem('pool_kartotek')) || [];
+            opgaver = JSON.parse(localStorage.getItem('pool_opgaver')) || [];
+            historik = JSON.parse(localStorage.getItem('pool_historik')) || [];
+        } catch(e) { kartotek = []; opgaver = []; historik = []; }
+        startGpsOvervaagning();
+    }
+    function gemAltTilHukommelse() {
+        localStorage.setItem('pool_kartotek', JSON.stringify(kartotek));
+        localStorage.setItem('pool_opgaver', JSON.stringify(opgaver));
+        localStorage.setItem('pool_historik', JSON.stringify(historik));
+        opdaterRegnskabstal();
+    }
+    function haandterPostnrInput() {
+        let pnr = document.getElementById('hus-postnr').value;
+        let fundetBy = findByFraPostnr(pnr);
+        if(fundetBy) document.getElementById('hus-by').value = fundetBy;
+    }
+    function haandterByInput() {
+        let byNavn = document.getElementById('hus-by').value;
+        let fundetPnr = findPostnrFraBy(byNavn);
+        if(fundetPnr) document.getElementById('hus-postnr').value = fundetPnr;
+    }
+    
+    function startGpsOvervaagning() {
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(pos => {
+                brugerLat = pos.coords.latitude; 
+                brugerLng = pos.coords.longitude; 
+                if(document.getElementById('side-opgaver').style.display === 'block') { 
+                    bygOpgaveliste(); 
+                }
+            }, err => {
+                console.log("GPS Fejl", err);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+        }
+    }
+
+    function estimerKoordinater(postnr, adresse) { 
+        let p = parseInt(postnr);
+        if (p === 4873) {
+            if (adresse && (adresse.toLowerCase().includes("linned") || adresse.toLowerCase().includes("linnet"))) {
+                return {lat: 54.6941, lng: 11.9562}; 
             }
-            
-            let soendag = new Date(mandag);
-            soendag.setDate(mandag.getDate() + 6);
+            return {lat: 54.6983, lng: 11.9272};
+        }
+        if (p === 4800) return {lat: 54.7675, lng: 11.8739};
+        return {lat: 54.7675, lng: 11.8739}; 
+    }
 
-            return {
-                start: mandag.toISOString().split('T')[0],
-                slut: soendag.toISOString().split('T')[0]
-            };
+    function bgeregnAfstandKm(lat1, lon1, lat2, lon2) {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+        let R = 6371; let dLat = (lat2-lat1) * Math.PI / 180; let dLon = (lon2-lon1) * Math.PI / 180;
+        let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
+
+    function visSide(sideId) {
+        document.getElementById('side-opgaver').style.display = 'none';
+        document.getElementById('side-kartotek').style.display = 'none';
+        document.getElementById('side-historik').style.display = 'none';
+        document.getElementById('side-regnskab').style.display = 'none';
+        document.getElementById('side-opret-opgave').style.display = 'none';
+        let sh = document.getElementById('side-opret-hus'); if(sh) sh.style.display = 'none';
+        
+        let aktivSide = document.getElementById(sideId); if(aktivSide) aktivSide.style.display = 'block';
+        document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
+        if(sideId === 'side-opgaver') { document.getElementById('btn-nav-opg').classList.add('active'); bygOpgaveliste(); }
+        if(sideId === 'side-kartotek') { document.getElementById('btn-nav-kar').classList.add('active'); bygKartotek(); }
+        if(sideId === 'side-historik') { document.getElementById('btn-nav-his').classList.add('active'); bygHistorik(); }
+        if(sideId === 'side-regnskab') { document.getElementById('btn-nav-reg').classList.add('active'); opdaterRegnskabstal(); }
+    }
+
+    function toggleDatoSortering() {
+        if (opgaveSortering === 'dato-asc') { opgaveSortering = 'dato-desc'; } 
+        else { opgaveSortering = 'dato-asc'; }
+        bygOpgaveliste();
+    }
+
+    function setOpgaveSortering(type) { 
+        opgaveSortering = type; 
+        bygOpgaveliste(); 
+    }
+    
+    function setKartotekSortering(type) { kartotekSortering = type; bygKartotek(); }
+    function setHistorikSortering(type) { historikSortering = type; bygHistorik(); }
+
+    function styreHusStaerrelseFelter() {
+        document.getElementById('felt-pool-m3').style.display = document.getElementById('hus-has-pool').checked ? 'block' : 'none';
+        document.getElementById('felt-spa-liter').style.display = document.getElementById('hus-has-spa').checked ? 'block' : 'none';
+    }
+
+    function bygOpgaveliste() {
+        let b = document.getElementById('liste-beholder'); if(!b) return; b.innerHTML = '';
+        if(opgaver.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Ingen aktive opgaver.</p>'; return; }
+        
+        let listeKopi = JSON.parse(JSON.stringify(opgaver)); 
+        
+        listeKopi.forEach(o => {
+            let hus = kartotek.find(h => h.id === o.kartotekId);
+            if(hus) {
+                let lok = estimerKoordinater(hus.postnr, hus.adresse);
+                o._afstand = (brugerLat && brugerLng) ? bgeregnAfstandKm(brugerLat, brugerLng, lok.lat, lok.lng) : null;
+            } else { o._afstand = null; }
+        });
+
+        if(opgaveSortering === 'dato-asc') { 
+            listeKopi.sort((x,y) => new Date(x.dato) - new Date(y.dato)); 
+        } else if(opgaveSortering === 'dato-desc') { 
+            listeKopi.sort((x,y) => new Date(y.dato) - new Date(x.dato)); 
+        } else if(opgaveSortering === 'afstand') { 
+            listeKopi.sort((x,y) => {
+                let ax = (x._afstand !== null && x._afstand !== undefined) ? x._afstand : 9999;
+                let ay = (y._afstand !== null && y._afstand !== undefined) ? y._afstand : 9999;
+                return ax - ay;
+            }); 
         }
 
-        // --- VISNINGS-STYRING ---
-        function switchView(viewName) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            
-            // Fjern aktiv markering på bundknapper, når der trykkes på en topfane
-            document.querySelectorAll('.nav-sub-btn').forEach(b => b.classList.remove('active'));
+        let datoBtn = document.getElementById('sort-opg-dato-toggle');
+        let afstBtn = document.getElementById('sort-opg-afstand');
+        
+        if (datoBtn && afstBtn) {
+            datoBtn.classList.remove('active');
+            afstBtn.classList.remove('active');
 
-            // Find den knap der matcher visningen
-            const btnIndex = ['opgaver', 'kalender', 'kunder'].indexOf(viewName);
-            if(btnIndex !== -1) document.querySelectorAll('.tab-btn')[btnIndex].classList.add('active');
-            
-            document.getElementById(`view-${viewName}`).classList.add('active');
-            
-            if(viewName === 'opgaver') bygForside();
-            if(viewName === 'kalender') bygKalender();
-            if(viewName === 'kunder') bygKundeListe();
-        }
-
-        function switchSubView(subName) {
-            document.querySelectorAll('.nav-sub-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            
-            if(subName === 'hoved') {
-                document.getElementById('sub-btn-hoved').classList.add('active');
-                document.getElementById('view-vaerktoejer-menu').classList.add('active');
-            } else if(subName === 'indstillinger') {
-                document.getElementById('sub-btn-indstillinger').classList.add('active');
-                document.getElementById('view-indstillinger').classList.add('active');
+            if (opgaveSortering === 'dato-asc') {
+                datoBtn.classList.add('active');
+                datoBtn.innerText = "📅 Dato (Nærmeste)";
+            } else if (opgaveSortering === 'dato-desc') {
+                datoBtn.classList.add('active');
+                datoBtn.innerText = "📅 Dato (Længste)";
+            } else if (opgaveSortering === 'afstand') {
+                afstBtn.classList.add('active');
             }
         }
 
-        // --- KUNDER: LÅSTE NUMRE & LOGIK ---
-        function visOpretKundeForm() { document.getElementById('opret-kunde-form').style.display = 'block'; }
-        function skjulOpretKundeForm() { document.getElementById('opret-kunde-form').style.display = 'none'; }
+        let iDagStreng = new Date().toISOString().split('T')[0];
 
-        function genererKundenummer() {
-            let aar = new Date().getFullYear();
-            let naesteNummer = kunder.length + 1;
-            return `${aar}-${String(naesteNummer).padStart(3, '0')}`;
-        }
-
-        function gemNyKunde() {
-            let navn = document.getElementById('k-navn').value.trim();
-            let adresse = document.getElementById('k-adresse').value.trim();
-            let tlf = document.getElementById('k-tlf').value.trim();
+        listeKopi.forEach(o => {
+            let hus = kartotek.find(h => h.id === o.kartotekId);
+            let adresseVisning = hus ? hus.adresse : "Ukendt hus";
+            let statusText = o.startet ? '⏳ I GANG' : 'KLAR';
+            let labelTypeStr = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel || ''}` : (o.type === "Lindetpakker" ? `📦 Linnedpakker (${o.lindetAntal || 0} stk)` : o.type);
+            let afstStr = (o._afstand !== null && o._afstand !== undefined) ? `📍 ${o._afstand.toFixed(1)} km` : `📍 -- km`;
+            let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
             
-            if(!navn) return alert('Indtast navn');
+            let kantKlasse = "";
+            if(o.dato === iDagStreng) {
+                kantKlasse = "opg-i-dag";
+            } else if(o.dato < iDagStreng) {
+                kantKlasse = "opg-overskredet";
+            }
 
-            let nyKunde = {
-                id: 'k_' + Date.now(),
-                nummer: genererKundenummer(), // Genereres og låses for evigt
-                navn: navn,
-                adresse: adresse,
-                tlf: tlf
-            };
-
-            kunder.push(nyKunde);
-            localStorage.setItem('pool_kunder', JSON.stringify(kunder));
-            skjulOpretKundeForm();
-            bygKundeListe();
-            
-            // Tøm felter
-            document.getElementById('k-navn').value = '';
-            document.getElementById('k-adresse').value = '';
-            document.getElementById('k-tlf').value = '';
-        }
-
-        function bygKundeListe() {
-            let html = '';
-            kunder.forEach(k => {
-                html += `<div class="card">
-                    <strong>[${k.nummer}] ${k.navn}</strong>
-                    <p style="font-size:14px; color:var(--text-secondary); margin-top:4px;">🗺️ ${k.adresse || 'Ingen adresse'}</p>
-                    <p style="font-size:14px; color:var(--text-secondary);">📞 ${k.tlf || 'Intet nummer'}</p>
+            b.innerHTML += `
+                <div class="card ${kantKlasse}" onclick="aabenOpgaveModal(${o.id})">
+                    <div class="card-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); redigerOpgave(${o.id})">✏️</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); sletOpgave(${o.id})">❌</button>
+                    </div>
+                    <span style="float:right; background:#374151; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; color:white; margin-right:55px;">${statusText}</span>
+                    <strong>${adresseVisning}</strong><br>
+                    <span style="font-size:12px;color:#9ca3af;">📅 ${o.dato} • ${labelTypeStr} • ${afstStr}</span>
+                    ${noteText}
                 </div>`;
-            });
-            document.getElementById('kunder-liste').innerHTML = html;
-        }
+        });
+    }
 
-        // --- OPGEVER & GENERERING (FREKVENS/START/SLUT) ---
-        function openOpretOpgaveModal(forudfyldtDato = null) {
-            document.getElementById('modal-opgave-titel').innerText = 'Opret Opgave';
-            document.getElementById('modal-opgave-id').value = '';
+    function bygKartotek() {
+        let b = document.getElementById('kartotek-beholder'); b.innerHTML = '';
+        let listeKopi = [...kartotek];
+        if(kartotekSortering === 'az') { listeKopi.sort((x,y) => x.adresse.localeCompare(y.adresse)); }
+        else { listeKopi.sort((x,y) => y.adresse.localeCompare(x.adresse)); }
+
+        document.querySelectorAll('#side-kartotek .sort-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('sort-kar-' + kartotekSortering).classList.add('active');
+
+        listeKopi.forEach(h => {
+            let fListe = []; if(h.hasPool) fListe.push("Pool"); if(h.hasSpa) fListe.push("Spa");
+            let fTekst = fListe.length > 0 ? fListe.join(" + ") : "Ingen faciliteter";
+            b.innerHTML += `
+                <div class="card" onclick="redigerHus(${h.id})">
+                    <div class="card-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); redigerHus(${h.id})">✏️</button>
+                        <button class="action-btn" onclick="event.stopPropagation(); sletHus(${h.id})">❌</button>
+                    </div>
+                    <strong>${h.adresse}</strong> • 👤 ${h.ejerNavn || '-'}<br>
+                    <span style="font-size:12px;color:#9ca3af;">${h.postnr || ''} ${h.by || ''} (${fTekst})</span>
+                </div>`;
+        });
+    }
+
+    function bygHistorik() {
+        let b = document.getElementById('historik-beholder'); b.innerHTML = '';
+        if(historik.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Historikken er tom.</p>'; return; }
+        
+        let listeKopi = [...historik];
+        if(historikSortering === 'nyest') { listeKopi.sort((x,y) => y._idTid - x._idTid); }
+        else if(historikSortering === 'aeldst') { listeKopi.sort((x,y) => x._idTid - y._idTid); }
+        else if(historikSortering === 'az') { listeKopi.sort((x,y) => x.adresse.localeCompare(y.adresse)); }
+
+        document.querySelectorAll('#side-historik .sort-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('sort-his-' + historikSortering).classList.add('active');
+
+        listeKopi.forEach(h => {
+            let bKlasse = h.betalt ? 'status-betalt' : 'status-ej-betalt';
+            let bTekst = h.betalt ? 'BETALT' : 'IKKE BETALT';
+            let tLabel = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel || ''}` : (h.type === "Lindetpakker" ? `📦 Linnedpakker (${h.lindetAntal || 0} stk)` : h.type);
             
-            let kundeSelect = document.getElementById('modal-opgave-kunde');
-            kundeSelect.innerHTML = kunder.map(k => `<option value="${k.id}">[${k.nummer}] ${k.navn}</option>`).join('');
-            
-            let dVaelger = document.getElementById('modal-opgave-startdato');
-            dVaelger.value = forudfyldtDato || new Date().toISOString().split('T')[0];
-            document.getElementById('modal-opgave-slutdato').value = '';
-            document.getElementById('modal-opgave-frekvens').value = '';
-            
-            document.getElementById('modal-opgave-ph').value = '7.2';
-            document.getElementById('modal-opgave-klor').value = '1.2';
-            document.getElementById('modal-opgave-noter').value = '';
-            
-            document.getElementById('modal-action-row').style.display = 'none';
-            document.getElementById('opgave-modal').style.display = 'block';
-            opdaterModalAdresseTlf();
-        }
+            b.innerHTML += `
+                <div class="card" onclick="visHistorikDetaljer(${h._idTid})">
+                    <span class="badge-status ${bKlasse}">${bTekst}</span>
+                    <strong>${h.adresse}</strong><br>
+                    <span style="font-size:12px;color:#9ca3af;">📅 ${h.dato || '-'} • ${tLabel} • <strong>${h.samletPris} kr.</strong></span>
+                </div>`;
+        });
+    }
 
-        function opdaterModalAdresseTlf() {
-            let kId = document.getElementById('modal-opgave-kunde').value;
-            let kunde = kunder.find(k => k.id === kId);
-            if(kunde) {
-                document.getElementById('modal-action-row').style.display = 'flex';
-                document.getElementById('link-maps').href = kunde.adresse ? `https://maps.google.com/?q=${encodeURIComponent(kunde.adresse)}` : '#';
-                document.getElementById('link-tlf').href = kunde.tlf ? `tel:${kunde.tlf}` : '#';
-            }
-        }
+    function opdaterRegnskabstal() {
+        let totalIndtjening = 0; let poolIndtjening = 0; let spaIndtjening = 0; let lindetIndtjening = 0; let adhocIndtjening = 0;
+        let totalTilgode = 0;
+        let tilgodeListeBeholder = document.getElementById('reg-tilgode-liste');
+        let kvitteringerBeholder = document.getElementById('reg-kvitteringer-liste');
+        
+        if (tilgodeListeBeholder) tilgodeListeBeholder.innerHTML = '';
+        if (kvitteringerBeholder) kvitteringerBeholder.innerHTML = '';
 
-        function gemOpgaveFraModal() {
-            let kId = document.getElementById('modal-opgave-kunde').value;
-            let startDatoStr = document.getElementById('modal-opgave-startdato').value;
-            let slutDatoStr = document.getElementById('modal-opgave-slutdato').value;
-            let frekvens = document.getElementById('modal-opgave-frekvens').value;
-            let ph = document.getElementById('modal-opgave-ph').value;
-            let klor = document.getElementById('modal-opgave-klor').value;
-            let noter = document.getElementById('modal-opgave-noter').value;
-            let eksisterendeId = document.getElementById('modal-opgave-id').value;
-
-            if(!kId || !startDatoStr) return alert('Kunde og startdato skal vælges');
-
-            // Hvis det er redigering af en eksisterende enkelt-opgave
-            if(eksisterendeId) {
-                let opg = opgaver.find(o => o.id === eksisterendeId);
-                if(opg) {
-                    opg.dato = startDatoStr;
-                    opg.ph = ph;
-                    opg.klor = klor;
-                    opg.noter = noter;
+        historik.forEach(h => {
+            if (h.betalt) {
+                totalIndtjening += h.samletPris;
+                if (h.type.startsWith("Poolkontrol")) poolIndtjening += h.samletPris;
+                else if (h.type.startsWith("Spakontrol")) spaIndtjening += h.samletPris;
+                else if (h.type === "Lindetpakker") lindetIndtjening += h.samletPris;
+                else if (h.type === "Ad-hoc") adhocIndtjening += h.samletPris;
+                
+                if (kvitteringerBeholder) {
+                    let kortTitel = h.type === "Ad-hoc" ? h.titel : (h.type === "Lindetpakker" ? `Linnedpakker (${h.lindetAntal} stk)` : h.type);
+                    kvitteringerBeholder.innerHTML += `
+                        <div class="kvittering-mini-card">
+                            <div style="font-size:12px; line-height:1.4;">
+                                <strong>${h.adresse}</strong><br>
+                                <span style="color:#9ca3af;">📅 ${h.dato} • ${kortTitel}</span><br>
+                                <span style="color:#4ade80; font-weight:bold;">${h.samletPris} kr.</span>
+                            </div>
+                            <button onclick="eksporterKvitteringPDF(${h._idTid})" style="width:auto; margin:0; padding:6px 10px; font-size:11px; background:#0284c7;">📥 Hent PDF</button>
+                        </div>`;
                 }
             } else {
-                // NY OPRETTELSE (Enkeltstående eller Frekvens-serie)
-                if(!frekvens || !slutDatoStr) {
-                    // Enkeltstående
-                    opgaver.push({
-                        id: 'o_' + Date.now(),
-                        kundeId: kId,
-                        dato: startDatoStr,
-                        status: 'aktiv',
-                        ph: ph,
-                        klor: klor,
-                        noter: noter
-                    });
-                } else {
-                    // Sæsonstyret frekvens med start og slut
-                    let nuvaerendeDato = new Date(startDatoStr);
-                    let stopDato = new Date(slutDatoStr);
-                    let intervalDage = 7;
-                    if(frekvens === 'hver_anden_uge') intervalDage = 14;
-                    if(frekvens === 'hver_tredje_uge') intervalDage = 21;
-                    if(frekvens === 'hver_fjerde_uge') intervalDage = 28;
-
-                    let serieId = 's_' + Date.now();
-                    while(nuvaerendeDato <= stopDato) {
-                        opgaver.push({
-                            id: 'o_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                            kundeId: kId,
-                            dato: nuvaerendeDato.toISOString().split('T')[0],
-                            status: 'aktiv',
-                            ph: ph,
-                            klor: klor,
-                            noter: noter,
-                            serieId: serieId
-                        });
-                        nuvaerendeDato.setDate(nuvaerendeDato.getDate() + intervalDage);
-                    }
+                totalTilgode += h.samletPris;
+                if (tilgodeListeBeholder) {
+                    let kortType = h.type === 'Lindetpakker' ? 'Pakker' : (h.type === 'Poolkontrol + Bundsugning' ? 'Pool+Sug' : h.type);
+                    tilgodeListeBeholder.innerHTML += `
+                        <div class="til-gode-item">
+                            <span>🏠 ${h.adresse} (${kortType})</span>
+                            <span style="font-weight:bold; color:#ef4444;">${h.samletPris} kr.</span>
+                        </div>`;
                 }
             }
+        });
 
-            localStorage.setItem('pool_opgaver', JSON.stringify(opgaver));
-            lukOpgaveModal();
-            switchView('opgaver');
+        if (tilgodeListeBeholder && tilgodeListeBeholder.innerHTML === '') {
+            tilgodeListeBeholder.innerHTML = '<p style="color:#6b7280; font-size:12px; text-align:center; margin:5px 0;">Ingen udestående regninger! 🙌</p>';
+        }
+        if (kvitteringerBeholder && kvitteringerBeholder.innerHTML === '') {
+            kvitteringerBeholder.innerHTML = '<p style="color:#6b7280; font-size:12px; text-align:center; margin:5px 0;">Ingen betalte opgaver endnu.</p>';
         }
 
-        function lukOpgaveModal() { document.getElementById('opgave-modal').style.display = 'none'; }
+        document.getElementById('reg-total-indtjening').innerText = totalIndtjening + " kr.";
+        document.getElementById('reg-pool-indtjening').innerText = poolIndtjening + " kr.";
+        document.getElementById('reg-spa-indtjening').innerText = spaIndtjening + " kr.";
+        document.getElementById('reg-lindet-indtjening').innerText = lindetIndtjening + " kr.";
+        document.getElementById('reg-adhoc-indtjening').innerText = adhocIndtjening + " kr.";
+        document.getElementById('reg-total-tilgode').innerText = totalTilgode + " kr.";
 
-        function lukOpgaveDirekteFraForside(opgaveId) {
-            let opg = opgaver.find(o => o.id === opgaveId);
-            if(opg) {
-                // Hent værdierne direkte fra felterne på forsiden
-                opg.ph = document.getElementById(`ph-${opgaveId}`).value;
-                opg.klor = document.getElementById(`klor-${opgaveId}`).value;
-                opg.noter = document.getElementById(`noter-${opgaveId}`).value;
-                opg.status = 'lukket';
-                localStorage.setItem('pool_opgaver', JSON.stringify(opgaver));
-                bygForside();
+        let alarmBjælke = document.getElementById('moms-alarm-ramme');
+        let advarselLabel = document.getElementById('moms-advarsel-label');
+        
+        if (alarmBjælke) {
+            alarmBjælke.innerText = totalIndtjening + " kr.";
+            if (totalIndtjening >= 40000) {
+                alarmBjælke.className = "moms-bjaelke moms-roed";
+                if(advarselLabel) advarselLabel.style.display = "block";
+            } else {
+                alarmBjælke.className = "moms-bjaelke moms-groen";
+                if(advarselLabel) advarselLabel.style.display = "none";
             }
         }
+    }
 
-        // --- BYG FORSIDE (UGENS SKRUMRENDE OVERBLIK) ---
-        function bygForside() {
-            let uge = hentIgangvaerendeUge();
-            let dagsDatoStr = new Date().toISOString().split('T')[0];
-            let dagensNavn = new Date().toLocaleDateString('da-DK', {weekday: 'long'});
-            
-            document.getElementById('uge-status').innerText = `Uge-periode: ${uge.start} til ${uge.slut} (I dag er det ${dagensNavn})`;
+    function aabenOpretOpgaveSide() {
+        document.getElementById('opg-id-skjult').value = "";
+        document.getElementById('opg-skema-titel').innerText = "➕ Opret Ny Opgave";
+        let select = document.getElementById('opret-opg-hus-select'); select.innerHTML = '';
+        kartotek.forEach(h => { select.innerHTML += '<option value="'+h.id+'">'+h.adresse+'</option>'; });
+        document.getElementById('opret-opg-dato').value = new Date().toISOString().split('T')[0];
+        document.getElementById('opret-opg-note').value = "";
+        document.getElementById('opret-opg-titel').value = "";
+        document.getElementById('opret-opg-fastpris-kroner').value = "";
+        document.getElementById('opret-opg-lindet-antal').value = "1";
+        haandterHusValgIOpgave(); visSide('side-opret-opgave');
+    }
 
-            // Filtrer så den KUN viser fra dags dato og frem til søndag i den igangværende uge
-            let ugensOpgaver = opgaver.filter(o => o.dato >= dagsDatoStr && o.dato <= uge.slut && o.status === 'aktiv');
-            
-            // Sorter efter dato
-            ugensOpgaver.sort((a,b) => a.dato.localeCompare(b.dato));
+    function redigerOpgave(id) {
+        let o = opgaver.find(item => item.id === id); if(!o) return;
+        document.getElementById('opg-id-skjult').value = o.id;
+        document.getElementById('opg-skema-titel').innerText = "✏️ Rediger Opgave";
+        
+        let select = document.getElementById('opret-opg-hus-select'); select.innerHTML = '';
+        kartotek.forEach(h => {
+            let sel = h.id === o.kartotekId ? "selected" : "";
+            select.innerHTML += `<option value="${h.id}" ${sel}>${h.adresse}</option>`;
+        });
+        
+        document.getElementById('opret-opg-dato').value = o.dato;
+        document.getElementById('opret-opg-note').value = o.note || "";
+        
+        haandterHusValgIOpgave();
+        document.getElementById('opret-opg-type').value = o.type;
+        styreOpgaveTypeFelter();
 
-            let html = '';
-            if(ugensOpgaver.length === 0) {
-                html = '<div class="card" style="text-align:center; color:var(--text-secondary);">Ingen manglende opgaver tilbage i denne uge!</div>';
+        if(o.type === "Ad-hoc") {
+            document.getElementById('opret-opg-titel').value = o.titel || "";
+            if(o.prisForm === "fast") {
+                document.getElementById('pris-type-fast').checked = true;
+                document.getElementById('opret-opg-fastpris-kroner').value = o.fastPris || "";
             } else {
-                ugensOpgaver.forEach(o => {
-                    let kunde = kunder.find(k => k.id === o.kundeId) || {navn: 'Ukendt', nummer: '???', adresse: '', tlf: ''};
-                    let dNavn = new Date(o.dato).toLocaleDateString('da-DK', {weekday: 'short', day: 'numeric'});
-                    
-                    html += `<div class="card">
-                        <div style="display:flex; justify-content:space-between;">
-                            <strong>[${kunde.nummer}] ${kunde.navn}</strong>
-                            <span style="font-size:12px; font-weight:700; color:var(--accent);">${dNavn}</span>
-                        </div>
-                        <p style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">🗺️ ${kunde.adresse}</p>
-                        
-                        <div class="row" style="margin-bottom:8px;">
-                            <div style="flex:1;"><label>pH</label><input type="number" step="0.1" id="ph-${o.id}" value="${o.ph}"></div>
-                            <div style="flex:1;"><label>Klor</label><input type="number" step="0.1" id="klor-${o.id}" value="${o.klor}"></div>
-                        </div>
-                        <div class="form-group voice-input-wrapper">
-                            <label>Noter</label>
-                            <textarea id="noter-${o.id}" rows="1">${o.noter || ''}</textarea>
-                            <button type="button" class="voice-btn" style="top:26px;" onclick="startStemmestyring('noter-${o.id}')">🎙️</button>
-                        </div>
-                        <button class="btn btn-success" onclick="lukOpgaveDirekteFraForside('${o.id}')">Udført & Gem</button>
+                document.getElementById('pris-type-time').checked = true;
+            }
+            styreFastPrisFelt();
+        } else if(o.type === "Lindetpakker") {
+            document.getElementById('opret-opg-lindet-antal').value = o.lindetAntal || "1";
+        }
+        visSide('side-opret-opgave');
+    }
+
+    function haandterHusValgIOpgave() {
+        let hId = parseInt(document.getElementById('opret-opg-hus-select').value); if(!hId) return;
+        let poolhus = kartotek.find(h => h.id === hId); if(!poolhus) return;
+        let typeSelect = document.getElementById('opret-opg-type'); typeSelect.innerHTML = '';
+        
+        if(poolhus.hasPool || poolhus.hasPool === undefined) {
+            typeSelect.innerHTML += '<option value="Poolkontrol">Poolkontrol (400 kr.)</option>';
+            typeSelect.innerHTML += '<option value="Poolkontrol + Bundsugning">Poolkontrol + Bundsugning (600 kr.)</option>';
+        }
+        if(poolhus.hasSpa) {
+            typeSelect.innerHTML += '<option value="Spakontrol">Spakontrol (300 kr.)</option>';
+            typeSelect.innerHTML += '<option value="Spakontrol + Skift af vand">Spakontrol + Skift af vand (600 kr.)</option>';
+            typeSelect.innerHTML += '<option value="Spakontrol + Pipecleaner">Spakontrol + Pipecleaner (1000 kr.)</option>';
+        }
+        typeSelect.innerHTML += '<option value="Ad-hoc">Ad-hoc opgave</option>';
+        typeSelect.innerHTML += '<option value="Lindetpakker">Udbringning af Linnedpakker</option>';
+        
+        styreOpgaveTypeFelter();
+    }
+
+    function styreOpgaveTypeFelter() {
+        let t = document.getElementById('opret-opg-type').value;
+        document.getElementById('opret-adhoc-specifikke-felter').style.display = (t === "Ad-hoc") ? 'block' : 'none';
+        document.getElementById('opret-lindet-specifikke-felter').style.display = (t === "Lindetpakker") ? 'block' : 'none';
+        styreFastPrisFelt();
+    }
+    function styreFastPrisFelt() {
+        let isFast = document.getElementById('pris-type-fast').checked;
+        let isAdhoc = document.getElementById('opret-opg-type').value === "Ad-hoc";
+        document.getElementById('felt-fast-pris-input-ramme').style.display = (isFast && isAdhoc) ? 'block' : 'none';
+    }
+
+    function gemNyOpgave() {
+        let idSkjult = document.getElementById('opg-id-skjult').value;
+        let hId = parseInt(document.getElementById('opret-opg-hus-select').value); if(!hId) return;
+        let d = document.getElementById('opret-opg-dato').value;
+        let t = document.getElementById('opret-opg-type').value;
+        let n = document.getElementById('opret-opg-note').value;
+        
+        let tStr = document.getElementById('opret-opg-titel').value.trim();
+        let pForm = document.querySelector('input[name="adhoc-pris-type"]:checked')?.value || "time";
+        let fPris = parseFloat(document.getElementById('opret-opg-fastpris-kroner').value) || 0;
+        let lAntal = parseInt(document.getElementById('opret-opg-lindet-antal').value) || 0;
+
+        if(t === "Ad-hoc" && !tStr) { alert("Angiv venligst en titel til ad-hoc opgaven."); return; }
+
+        if(idSkjult) {
+            let o = opgaver.find(item => item.id == idSkjult);
+            if(o) { o.kartotekId = hId; o.dato = d; o.type = t; o.note = n; o.titel = tStr; o.prisForm = pForm; o.fastPris = fPris; o.lindetAntal = lAntal; }
+        } else {
+            opgaver.push({ id: Date.now(), kartotekId: hId, dato: d, type: t, note: n, titel: tStr, prisForm: pForm, fastPris: fPris, lindetAntal: lAntal, startet: null, omkostninger: [] });
+        }
+        gemAltTilHukommelse(); visSide('side-opgaver');
+    }
+
+    function gemNytHus() {
+        let idSkjult = document.getElementById('hus-id-skjult').value;
+        let adr = document.getElementById('hus-adresse').value; if(!adr) return;
+        
+        let pB = document.getElementById('hus-has-pool').checked;
+        let sB = document.getElementById('hus-has-spa').checked;
+
+        let dataObj = {
+            adresse: adr, by: document.getElementById('hus-by').value, postnr: document.getElementById('hus-postnr').value,
+            ejerNavn: document.getElementById('hus-ejer-navn').value, telefon: document.getElementById('hus-telefon').value,
+            ejer2Navn: document.getElementById('hus-ejer2-navn').value, telefon2: document.getElementById('hus-telefon2').value,
+            kode: document.getElementById('hus-kode').value, placering: document.getElementById('hus-placering').value,
+            note: document.getElementById('hus-note').value, hasPool: pB, hasSpa: sB,
+            pool: parseFloat(document.getElementById('hus-pool').value) || 0,
+            spa: parseFloat(document.getElementById('hus-spa').value) || 0
+        };
+
+        if(idSkjult) {
+            let h = kartotek.find(item => item.id == idSkjult);
+            if(h) Object.assign(h, dataObj);
+        } else {
+            dataObj.id = Date.now(); kartotek.push(dataObj);
+        }
+        gemAltTilHukommelse(); visSide('side-kartotek');
+    }
+
+    function aabenOpretHusSide() {
+        document.getElementById('hus-id-skjult').value = "";
+        document.getElementById('hus-skema-titel').innerText = "🏠 Tilføj Kunde / Hus";
+        document.getElementById('genvej-opret-opg-btn').style.display = 'none'; 
+        document.getElementById('hus-adresse').value = ""; document.getElementById('hus-by').value = "";
+        document.getElementById('hus-postnr').value = ""; document.getElementById('hus-ejer-navn').value = "";
+        document.getElementById('hus-telefon').value = ""; document.getElementById('hus-ejer2-navn').value = "";
+        document.getElementById('hus-telefon2').value = ""; document.getElementById('hus-kode').value = "";
+        document.getElementById('hus-placering').value = ""; document.getElementById('hus-note').value = "";
+        document.getElementById('hus-has-pool').checked = true; document.getElementById('hus-has-spa').checked = false;
+        document.getElementById('hus-pool').value = "27"; document.getElementById('hus-spa').value = "1500";
+        styreHusStaerrelseFelter(); visSide('side-opret-hus');
+    }
+
+    function redigerHus(id) {
+        let h = kartotek.find(item => item.id === id); if(!h) return;
+        document.getElementById('hus-id-skjult').value = h.id;
+        document.getElementById('hus-skema-titel').innerText = "✏️ Rediger Kunde";
+        
+        let gBtn = document.getElementById('genvej-opret-opg-btn');
+        if(gBtn) gBtn.style.display = 'block';
+
+        document.getElementById('hus-adresse').value = h.adresse; document.getElementById('hus-by').value = h.by || "";
+        document.getElementById('hus-postnr').value = h.postnr || ""; document.getElementById('hus-ejer-navn').value = h.ejerNavn || "";
+        document.getElementById('hus-telefon').value = h.telefon || ""; document.getElementById('hus-ejer2-navn').value = h.ejer2Navn || "";
+        document.getElementById('hus-telefon2').value = h.telefon2 || ""; document.getElementById('hus-kode').value = h.kode || "";
+        document.getElementById('hus-placering').value = h.placering || ""; document.getElementById('hus-note').value = h.note || "";
+        document.getElementById('hus-has-pool').checked = !!h.hasPool; document.getElementById('hus-has-spa').checked = !!h.hasSpa;
+        document.getElementById('hus-pool').value = h.pool || 0; document.getElementById('hus-spa').value = h.spa || 0;
+        styreHusStaerrelseFelter(); visSide('side-opret-hus');
+    }
+
+    function genvejHusTilOpgave() {
+        let hId = document.getElementById('hus-id-skjult').value; if(!hId) return;
+        aabenOpretOpgaveSide();
+        document.getElementById('opret-opg-hus-select').value = hId;
+        haandterHusValgIOpgave();
+    }
+
+    function sletHus(id) {
+        if(confirm("Er du sikker på, at du vil slette denne kunde fra kartoteket?")) {
+            kartotek = kartotek.filter(h => h.id !== id);
+            gemAltTilHukommelse(); bygKartotek();
+        }
+    }
+
+    function aabenOpgaveModal(id) {
+        aktivOpgaveId = id;
+        let o = opgaver.find(item => item.id === id); if(!o) return;
+        let hus = kartotek.find(h => h.id === o.kartotekId) || {};
+        
+        if(!o.omkostninger) o.omkostninger = [];
+        midlertidigOmkListe = [...o.omkostninger]; tegnOmkostningsListe();
+        gemtFotoBase64 = o.fotoB64 || null;
+        
+        let previewImg = document.getElementById('m-foto-preview');
+        if(gemtFotoBase64) { previewImg.src = gemtFotoBase64; previewImg.style.display = 'block'; } 
+        else { previewImg.style.display = 'none'; document.getElementById('m-foto-input').value = ""; }
+
+        document.getElementById('m-adhoc-udfoert-tekst').value = o.udfoertRapport || "";
+        document.getElementById('m-sms-note').value = o.smsNoteTilEjer || "";
+
+        document.getElementById('m-kemi-historik-udrul').style.display = 'none';
+
+        let nRamme = document.getElementById('m-noter-ramme'); nRamme.innerHTML = "";
+        if(hus.note) nRamme.innerHTML += `<div style="background:rgba(56,189,248,0.15); border-left:4px solid #38bdf8; padding:8px; margin-bottom:5px; font-size:13px; color:white;"><strong>🏠 Fast note:</strong> ${hus.note}</div>`;
+        if(o.note) nRamme.innerHTML += `<div style="background:rgba(250,204,21,0.15); border-left:4px solid #facc15; padding:8px; font-size:13px; color:white;"><strong>📝 Opgave note:</strong> ${o.note}</div>`;
+
+        document.getElementById('m-navn').innerText = hus.adresse;
+        document.getElementById('m-ejer-navn').innerText = hus.ejerNavn || "-";
+        document.getElementById('m-type').innerText = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel}` : (o.type === "Lindetpakker" ? "Udbringning af Linnedpakker" : o.type);
+        document.getElementById('m-adresse').innerText = hus.adresse + (hus.by ? ", " + hus.by : "");
+        document.getElementById('m-kode').innerText = hus.kode || "-";
+        document.getElementById('m-nogle-placering').innerText = hus.placering ? `(${hus.placering})` : "";
+        document.getElementById('m-dato-visning').innerText = o.dato || "-";
+        
+        let tLink = document.getElementById('m-telefon-link');
+        if(hus.telefon) {
+            tLink.innerText = hus.telefon;
+            tLink.href = "tel:" + hus.telefon.replace(/\s+/g, '');
+        } else {
+            tLink.innerText = "-";
+            tLink.href = "#";
+        }
+        
+        if (o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning") {
+            document.getElementById('m-stoerrelse-visning').innerText = "Pool: " + (hus.pool || 27) + " m³";
+            aktuelM3Mængde = hus.pool || 27;
+        } else if (o.type.startsWith("Spakontrol")) {
+            document.getElementById('m-stoerrelse-visning').innerText = "Spa: " + (hus.spa || 1500) + " L";
+            aktuelM3Mængde = (hus.spa > 100) ? (hus.spa / 1000) : hus.spa;
+        } else if (o.type === "Lindetpakker") {
+            let pPris = (o.lindetAntal || 0) * 150;
+            document.getElementById('m-stoerrelse-visning').innerText = `Linnedpakker: ${o.lindetAntal || 0} stk. (${150 + pPris} kr.)`;
+        } else {
+            let pBeskrivelse = o.prisForm === "fast" ? `Fast pris: ${o.fastPris} kr.` : "Timepris (300 kr./t)";
+            document.getElementById('m-stoerrelse-visning').innerText = pBeskrivelse;
+        }
+        
+        let hasKemi = (o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning" || o.type.startsWith("Spakontrol"));
+        document.getElementById('kemi-sektion').style.display = hasKemi ? 'block' : 'none';
+        
+        if(hasKemi) {
+            let sidsteBesøg = [...historik]
+                .reverse()
+                .find(h => h.adresse === hus.adresse && h.kemiHistorik);
+                
+            if(sidsteBesøg && sidsteBesøg.kemiHistorik) {
+                document.getElementById('kemi-maalt-klor').value = sidsteBesøg.kemiHistorik.maaltKlor || "1.0";
+                document.getElementById('kemi-maalt-ph').value = sidsteBesøg.kemiHistorik.maaltPh || "7.0";
+            } else {
+                document.getElementById('kemi-maalt-klor').value = "1.0";
+                document.getElementById('kemi-maalt-ph').value = "7.0";
+            }
+            beregnKemi(); 
+        }
+
+        let hasInternNote = (o.type === "Ad-hoc" || o.type.startsWith("Spakontrol"));
+        document.getElementById('m-adhoc-arbejdsrapport-felt').style.display = hasInternNote ? 'block' : 'none';
+        
+        document.getElementById('lindet-afkryds-sektion').style.display = (o.type === "Lindetpakker" && o.startet) ? 'block' : 'none';
+
+        if(o.type === "Lindetpakker") {
+            document.getElementById('m-lindet-afkryds').checked = !!o.lindetLeveret;
+        }
+
+        if(o.startet) {
+            document.getElementById('btn-start').style.display = 'none';
+            document.getElementById('afslut-afsnit').style.display = 'block';
+            document.getElementById('igang-felter-container').style.display = 'block';
+            document.getElementById('m-status').innerText = "Status: I gang";
+            
+            if(o.type === "Lindetpakker") {
+                document.getElementById('btn-hoved-afslut').disabled = !o.lindetLeveret;
+                document.getElementById('btn-hoved-afslut').style.opacity = o.lindetLeveret ? "1" : "0.5";
+            } else {
+                document.getElementById('btn-hoved-afslut').disabled = false;
+                document.getElementById('btn-hoved-afslut').style.opacity = "1";
+            }
+        } else {
+            document.getElementById('btn-start').style.display = 'block';
+            document.getElementById('afslut-afsnit').style.display = 'none';
+            document.getElementById('igang-felter-container').style.display = 'none';
+            document.getElementById('m-status').innerText = "Status: Klar";
+        }
+        document.getElementById('opgave-modal').style.display = 'flex';
+    }
+
+    function toggleVisKemiHistorik() {
+        let boks = document.getElementById('m-kemi-historik-udrul');
+        if(boks.style.display === 'block') {
+            boks.style.display = 'none';
+            return;
+        }
+
+        let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
+        let hus = kartotek.find(h => h.id === o.kartotekId); if(!hus) return;
+
+        let alleHustiltag = historik.filter(h => h.adresse === hus.adresse && h.kemiHistorik);
+        let senesteFem = alleHustiltag.slice(-5).reverse();
+
+        if(senesteFem.length === 0) {
+            boks.innerHTML = "<span style='color:#9ca3af;'>Ingen gemte kemimålinger fundet på dette hus endnu.</span>";
+        } else {
+            let htmlStr = "<strong style='color:#38bdf8; display:block; border-bottom:1px solid #333; padding-bottom:3px; margin-bottom:5px;'>Seneste 5 kemi-målinger:</strong>";
+            senesteFem.forEach(h => {
+                let kh = h.kemiHistorik;
+                htmlStr += `
+                    <div style="margin-bottom:6px; padding-bottom:6px; border-bottom:1px dashed #222;">
+                        <span style="color:#facc15;">📅 ${h.dato || '-'}</span> - <strong>${h.type}</strong><br>
+                        🧪 Klor: <span style="color:#4ade80;">${kh.maaltKlor} mg/l</span> | pH: <span style="color:#4ade80;">${kh.maaltPh}</span><br>
+                        💊 Dosering: Daytabs: ${kh.calcDaytabs || 0}stk • Boost: ${kh.calcBoost || 0}ml • pH-Minus: ${kh.calcMinus || 0}ml • pH-Plus: ${kh.calcPlus || 0}ml
                     </div>`;
-                });
-            }
-            document.getElementById('forside-opgaver-liste').innerHTML = html;
-        }
-
-        // --- KALENDER LOGIK (MÅNEDSMATRIX) ---
-        function changeMonth(direction) {
-            kalenderVisningDato.setMonth(kalenderVisningDato.getMonth() + direction);
-            bygKalender();
-        }
-
-        function bygKalender() {
-            let aar = kalenderVisningDato.getFullYear();
-            let mdr = kalenderVisningDato.getMonth();
-            
-            let mdrNavne = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
-            document.getElementById('cal-month-title').innerText = `${mdrNavne[mdr]} ${aar}`;
-
-            let foersteDagIMdr = new Date(aar, mdr, 1).getDay();
-            let antalDageIMdr = new Date(aar, mdr + 1, 0).getDate();
-            
-            // Juster til dansk ugestart (Mandag som første dag, JavaScript har Søndag som 0)
-            let startTommeFelter = foersteDagIMdr === 0 ? 6 : foersteDagIMdr - 1;
-
-            let gridHtml = `
-                <div class="cal-header">MA</div><div class="cal-header">TI</div><div class="cal-header">ON</div>
-                <div class="cal-header">TO</div><div class="cal-header">FR</div><div class="cal-header">LØ</div>
-                <div class="cal-header">SØ</div>
-            `;
-
-            // Tomme felter inden måneden starter
-            for(let i=0; i<startTommeFelter; i++) {
-                gridHtml += `<div class="cal-day empty"></div>`;
-            }
-
-            let dagsDatoStr = new Date().toISOString().split('T')[0];
-
-            // Byg månedens dage
-            for(let dag=1; dag<=antalDageIMdr; dag++) {
-                let nuDato = new Date(aar, mdr, dag);
-                let nuDatoStr = nuDato.toISOString().split('T')[0];
-                
-                // Tjek status på opgaver på denne specifikke dag
-                let dagensOpgaver = opgaver.filter(o => o.dato === nuDatoStr);
-                let statusKlasse = '';
-                
-                if(dagensOpgaver.length > 0) {
-                    let harAktive = dagensOpgaver.some(o => o.status === 'aktiv');
-                    // Hvis der er uafsluttede opgaver i dag eller fremtiden = grøn. Hvis fortid og lukket = rød.
-                    if(harAktive && nuDatoStr >= dagsDatoStr) {
-                        statusKlasse = 'has-future';
-                    } else {
-                        statusKlasse = 'has-past';
-                    }
-                }
-
-                let valgtKlasse = (nuDatoStr === valgtDatoIKalender) ? 'selected' : '';
-
-                gridHtml += `<div class="cal-day ${statusKlasse} ${valgtKlasse}" onclick="vaelgKalenderDato('${nuDatoStr}')">${dag}</div>`;
-            }
-
-            document.getElementById('calendar-matrix').innerHTML = gridHtml;
-            bygKalenderDetaljerListe();
-        }
-
-        function vaelgKalenderDato(datoStr) {
-            valgtDatoIKalender = datoStr;
-            bygKalender();
-        }
-
-        function bygKalenderDetaljerListe() {
-            let detDiv = document.getElementById('kalender-detaljer');
-            let opretDiv = document.getElementById('kalender-opret-sektion');
-            let listeDiv = document.getElementById('kalender-valgt-dato-liste');
-            
-            detDiv.style.display = 'block';
-            let dagsDatoStr = new Date().toISOString().split('T')[0];
-
-            // Spærring for fortiden: Kun "Opret Opgave" hvis datoen er i dag eller i fremtiden
-            if(valgtDatoIKalender >= dagsDatoStr) {
-                opretDiv.innerHTML = `<button class="btn btn-primary" onclick="openOpretOpgaveModal('${valgtDatoIKalender}')">Opret opgave på denne dato</button>`;
-            } else {
-                opretDiv.innerHTML = `<p style="font-size:13px; color:var(--danger); font-weight:600; text-align:center;">Datoen er overskredet (Historik låst)</p>`;
-            }
-
-            let dagensOpgaver = opgaver.filter(o => o.dato === valgtDatoIKalender);
-            let html = '';
-
-            if(dagensOpgaver.length === 0) {
-                html = '<p style="color:var(--text-secondary); font-size:14px;">Ingen opgaver på denne dato.</p>';
-            } else {
-                dagensOpgaver.forEach(o => {
-                    let kunde = kunder.find(k => k.id === o.kundeId) || {navn: 'Ukendt', nummer: '???'};
-                    let statusTekst = o.status === 'aktiv' ? `<span style="color:var(--success)">Aktiv</span>` : `<span style="color:var(--text-secondary)">Udført</span>`;
-                    
-                    html += `<div class="card" style="font-size:14px; padding:10px; border-style:dashed;">
-                        <strong>[${kunde.nummer}] ${kunde.navn}</strong> - ${statusTekst}
-                        <p style="font-size:12px; color:var(--text-secondary); margin-top:2px;">pH: ${o.ph} | Klor: ${o.klor} | Noter: ${o.noter || 'Ingen'}</p>
-                    </div>`;
-                });
-            }
-            listeDiv.innerHTML = html;
-        }
-
-        // --- STEMMESTYRING (MIKROFON-INPUT) ---
-        function startStemmestyring(feltId) {
-            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!window.SpeechRecognition) return alert("Stemme-input understøttes desværre ikke i denne browser/enhed.");
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = "da-DK";
-            recognition.interimResults = false;
-            
-            let felt = document.getElementById(feltId);
-            felt.placeholder = "Lytter... Tal nu.";
-            
-            recognition.addEventListener('result', e => {
-                const tekst = Array.from(e.results)
-                    .map(result => result[0])
-                    .map(result => result.transcript)
-                    .join('');
-                
-                felt.value = felt.value ? felt.value + " " + tekst : tekst;
-                felt.placeholder = "";
             });
-
-            recognition.addEventListener('end', () => { felt.placeholder = ""; });
-            recognition.start();
+            boks.innerHTML = htmlStr;
         }
+        boks.style.display = 'block';
+    }
 
-        // --- UAFHÆNGIG KEMIBEREGNER ---
-        function beregnKemiUafhaengig() {
-            let type = document.getElementById('calc-type').value;
-            let nu = parseFloat(document.getElementById('calc-nu').value) || 0;
-            let oensk = parseFloat(document.getElementById('calc-oensk').value) || 0;
-            let resDiv = document.getElementById('calc-resultat');
+    function haandterLindetAfkrydsning() {
+        let o = opgaver.find(item => item.id === aktivOpgaveId);
+        if(o) {
+            o.lindetLeveret = document.getElementById('m-lindet-afkryds').checked;
+            document.getElementById('btn-hoved-afslut').disabled = !o.lindetLeveret;
+            document.getElementById('btn-hoved-afslut').style.opacity = o.lindetLeveret ? "1" : "0.5";
+            gemAltTilHukommelse();
+        }
+    }
 
-            if(type === 'klor') {
-                if(oensk <= nu) { resDiv.innerText = "Ingen klor behøves. Værdien er fin."; }
-                else {
-                    let mangler = oensk - nu;
-                    let gramHensigt = Math.round(mangler * 30); // Standard estimat-metrik
-                    resDiv.innerText = `Tilsæt ca. ${gramHensigt}g klor pr. 10m³ for at hæve værdien.`;
-                }
-            } else if(type === 'ph_minus') {
-                if(nu <= oensk) { resDiv.innerText = "pH er ikke for høj. Intet pH-Minus behøves."; }
-                else {
-                    let forHoej = nu - oensk;
-                    let gramMinus = Math.round(forHoej * 100);
-                    resDiv.innerText = `Tilsæt ca. ${gramMinus}g pH-Minus pr. 10m³ for at sænke værdien.`;
-                }
+    function haandterFotoValg() {
+        let file = document.getElementById('m-foto-input').files[0]; if(!file) return;
+        let r = new FileReader();
+        r.onload = function(e) {
+            gemtFotoBase64 = e.target.result;
+            let p = document.getElementById('m-foto-preview'); p.src = gemtFotoBase64; p.style.display = 'block';
+            let o = opgaver.find(item => item.id === aktivOpgaveId); if(o) { o.fotoB64 = gemtFotoBase64; gemAltTilHukommelse(); }
+        };
+        r.readAsDataURL(file);
+    }
+
+    function tilfoejEkstraOmkostning() {
+        let t = document.getElementById('omk-tekst').value.trim();
+        let p = parseFloat(document.getElementById('omk-pris').value) || 0; if(!t || p <= 0) return;
+        midlertidigOmkListe.push({ tekst: t, pris: p });
+        let o = opgaver.find(item => item.id === aktivOpgaveId); if(o) { o.omkostninger = [...midlertidigOmkListe]; gemAltTilHukommelse(); }
+        document.getElementById('omk-tekst').value = ""; document.getElementById('omk-pris').value = ""; tegnOmkostningsListe();
+    }
+    function fjernOmkostning(idx) {
+        midlertidigOmkListe.splice(idx, 1);
+        let o = opgaver.find(item => item.id === aktivOpgaveId); if(o) { o.omkostninger = [...midlertidigOmkListe]; gemAltTilHukommelse(); }
+        tegnOmkostningsListe();
+    }
+    function tegnOmkostningsListe() {
+        let r = document.getElementById('omk-liste-ramme'); r.innerHTML = "";
+        midlertidigOmkListe.forEach((omk, idx) => {
+            r.innerHTML += `<div class="omk-liste-item"><span>• ${omk.tekst}: <strong>${omk.pris} kr.</strong></span><span onclick="fjernOmkostning(${idx})" style="color:#ef4444; cursor:pointer;">❌</span></div>`;
+        });
+    }
+
+    function startTimer() {
+        let o = opgaver.find(item => item.id === aktivOpgaveId); if(o) o.startet = Date.now();
+        gemAltTilHukommelse(); aabenOpgaveModal(aktivOpgaveId);
+    }
+
+    function afslutOpgave(sendSmsJaNej) {
+        let o = opgaver.find(item => item.id === aktivOpgaveId); if(!o) return;
+        let hus = kartotek.find(h => h.id === o.kartotekId) || {};
+        let nu = Date.now();
+        
+        let minutterBrugt = o.startet ? Math.round((nu - o.startet) / 60000) : 1; if(minutterBrugt < 1) minutterBrugt = 1;
+        
+        let basisPris = 0; let prisLabel = o.type;
+        let pakkeLinjeSms = "";
+        
+        if(o.type === "Poolkontrol") { basisPris = 400; }
+        else if(o.type === "Poolkontrol + Bundsugning") { basisPris = 600; }
+        else if(o.type === "Spakontrol") { basisPris = 300; }
+        else if(o.type === "Spakontrol + Skift af vand") { basisPris = 600; }
+        else if(o.type === "Spakontrol + Pipecleaner") { basisPris = 1000; }
+        else if(o.type === "Lindetpakker") {
+            basisPris = 150; prisLabel = "Udbringningsgebyr";
+            let pakkePrisTotal = (o.lindetAntal || 0) * 150;
+            if((o.lindetAntal || 0) > 0) {
+                pakkeLinjeSms = `Linnedpakker (${o.lindetAntal} stk.): ${pakkePrisTotal} kr.\n`;
+            }
+        }
+        else if(o.type === "Ad-hoc") {
+            if(o.prisForm === "fast") { basisPris = o.fastPris; prisLabel = "Fast pris"; } 
+            else {
+                let timerPaabegyndt = Math.ceil(minutterBrugt / 60);
+                basisPris = timerPaabegyndt * 300; prisLabel = `Arbejdstid (${timerPaabegyndt} t.)`;
             }
         }
 
-        // --- INDSTILLINGER & VEDLIGEHOLDELSE ---
-        function toggleTema() {
-            nuvaerendeTema = (nuvaerendeTema === 'dark') ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', nuvaerendeTema);
-            localStorage.setItem('pool_tema', nuvaerendeTema);
-        }
+        let samletEkstraPris = 0;
+        midlertidigOmkListe.forEach(omk => samletEkstraPris += omk.pris);
+        
+        let totalPris = basisPris + samletEkstraPris;
+        if(o.type === "Lindetpakker") { totalPris += ((o.lindetAntal || 0) * 150); }
 
-        function lavBackup() {
-            let data = { kunder: kunder, opgaver: opgaver };
-            let blob = new Blob([JSON.stringify(data)], {type: "application/json"});
-            let a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = `pool_backup_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-        }
+        let adhocRapportTekst = document.getElementById('m-adhoc-udfoert-tekst').value.trim();
+        let smsNoteBruger = document.getElementById('m-sms-note').value.trim();
 
-        function gendanBackup() {
-            let input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = e => {
-                let file = e.target.files[0];
-                let reader = new FileReader();
-                reader.onload = readerEvent => {
-                    try {
-                        let data = JSON.parse(readerEvent.target.result);
-                        if(data.kunder && data.opgaver) {
-                            kunder = data.kunder;
-                            opgaver = data.opgaver;
-                            localStorage.setItem('pool_kunder', JSON.stringify(kunder));
-                            localStorage.setItem('pool_opgaver', JSON.stringify(opgaver));
-                            alert('Backup gendannet fejlfrit!');
-                            bygForside();
-                        } else { alert('Fejl: Forkert filformat.'); }
-                    } catch(err) { alert('Kunne ikke læse filen.'); }
-                };
-                reader.readAsText(file);
+        let gemKemiData = null;
+        if(o.type === "Poolkontrol" || o.type === "Poolkontrol + Bundsugning" || o.type.startsWith("Spakontrol")) {
+            gemKemiData = {
+                maaltKlor: document.getElementById('kemi-maalt-klor').value,
+                oensketKlor: document.getElementById('kemi-oensket-klor').value,
+                maaltPh: document.getElementById('kemi-maalt-ph').value,
+                oensketPh: document.getElementById('kemi-oensket-ph').value,
+                calcDaytabs: document.getElementById('res-daytabs').innerText,
+                calcBoost: document.getElementById('res-boost').innerText,
+                calcAntiklor: document.getElementById('res-antiklor').innerText,
+                calcMinus: document.getElementById('res-phminus').innerText,
+                calcPlus: document.getElementById('res-phplus').innerText
             };
-            input.click();
         }
 
-        // --- NULSTILLINGER MED ADVARSLER ---
-        function nulstilKundenumreMedAdvarsel() {
-            if(confirm("Er du absolut sikker på, at du vil nulstille kundenumrene? Eksisterende kundenumre kan ændre sig, hvis rækkefølgen brydes!")) {
-                kunder.forEach((k, index) => {
-                    let aar = new Date().getFullYear();
-                    k.nummer = `${aar}-${String(index + 1).padStart(3, '0')}`;
-                });
-                localStorage.setItem('pool_kunder', JSON.stringify(kunder));
-                alert("Kundenumre er blevet genberegnet.");
-                bygKundeListe();
+        historik.push({
+            _idTid: nu, adresse: hus.adresse, by: hus.by, postnr: hus.postnr, ejerNavn: hus.ejerNavn, type: o.type, titel: o.titel || '', dato: o.dato, minutter: minutterBrugt,
+            basisPris: basisPris, prisLabel: prisLabel, omkostninger: [...midlertidigOmkListe],
+            samletPris: totalPris, smsSendt: sendSmsJaNej, betalt: false, noteTilSms: smsNoteBruger, 
+            internRapport: adhocRapportTekst, fotoB64: gemtFotoBase64, lindetAntal: o.lindetAntal || 0,
+            kemiHistorik: gemKemiData
+        });
+
+        if(sendSmsJaNej && hus.telefon) {
+            let smsDato = o.dato.split('-').reverse().join('.');
+            let smsTekst = `Hej ${hus.ejerNavn || 'ejer'}\n\n`;
+            
+            if(o.type === "Ad-hoc") {
+                smsTekst += `Jeg har d. ${smsDato} udført opgaven: ${o.titel} på ${hus.adresse}.\n\n`;
+            } else if(o.type === "Lindetpakker") {
+                smsTekst += `Jeg har d. ${smsDato} leveret Linnedpakker på ${hus.adresse}.\n\n`;
+            } else {
+                smsTekst += `Jeg har d. ${smsDato} udført ${o.type} på ${hus.adresse}.\n\n`;
+                if(o.type.startsWith("Pool")) { smsTekst += `Poolen er nu klar til de nye gæster.\n\n`; } 
+                else { smsTekst += `Spaen er nu klar til de nye gæster.\n\n`; }
             }
-        }
-
-        function nulstilAppMedAdvarsel() {
-            if(confirm("Er du sikker på, at du vil genstarte appen? Ingen data slettes, systemet indlæser blot alt på ny.")) {
-                window.location.reload();
+            
+            if(smsNoteBruger) smsTekst += `${smsNoteBruger}\n\n`;
+            
+            smsTekst += `Regning:\n${prisLabel}: ${basisPris} kr.\n`;
+            if(pakkeLinjeSms) smsTekst += pakkeLinjeSms;
+            
+            if(midlertidigOmkListe.length > 0) {
+                midlertidigOmkListe.forEach(omk => { smsTekst += `${omk.tekst}: ${omk.pris} kr.\n`; });
             }
+            smsTekst += `Samlet pris: ${totalPris} kr.\n\n`;
+            smsTekst += `Beløbet bedes overføres på MobilePay på 28 68 88 98 indenfor tre dage.\n\n`;
+            smsTekst += `Mange hilsner\nDin Poolmand 🏊‍♂️`;
+            
+            window.location.href = `sms:${hus.telefon}?body=${encodeURIComponent(smsTekst)}`;
         }
 
-        // Første opstart af forsiden
-        bygForside();
-    </script>
+        opgaver = opgaver.filter(item => item.id !== aktivOpgaveId);
+        gemAltTilHukommelse(); lukOpgaveModal(); visSide('side-historik');
+    }
+
+    function visHistorikDetaljer(idTid) {
+        let h = historik.find(item => item._idTid === idTid); if(!h) return;
+        let tLabel = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel}` : (h.type === "Lindetpakker" ? `📦 Linnedpakker (${h.lindetAntal} stk)` : h.type);
+        
+        let indhold = `<strong>Ejer:</strong> ${h.ejerNavn || '-'}<br><strong>Hus:</strong> ${h.adresse}<br><strong>Dato:</strong> ${h.dato || '-'}<br><strong>Type:</strong> ${tLabel}<br><hr style="border-color:#444;">`;
+        
+        if(h.kemiHistorik) {
+            let kh = h.kemiHistorik;
+            indhold += `
+                <div style="background:#111827; padding:10px; border-radius:6px; margin-bottom:10px; font-size:13px; border-left:3px solid #2563eb;">
+                    <strong style="color:#60a5fa;">🧪 Indtastede kemimålinger:</strong><br>
+                    • Klor: Målt ${kh.maaltKlor} mg/l (Ønsket: ${kh.oensketKlor})<br>
+                    • pH: Målt ${kh.maaltPh} (Ønsket: ${kh.oensketPh})<br>
+                    <strong style="color:#38bdf8; display:block; margin-top:4px;">Beregnet dosering ved udførsel:</strong>
+                    💊 Daytabs: ${kh.calcDaytabs} stk | 🚀 Boost: ${kh.calcBoost} ml<br>
+                    📉 Antiklor: ${kh.calcAntiklor} ml | ➖ pH-Minus: ${kh.calcMinus} ml | ➕ pH-Plus: ${kh.calcPlus} ml
+                </div><hr style="border-color:#444;">`;
+        }
+
+        if((h.type === "Ad-hoc" || h.type.startsWith("Spakontrol")) && h.internRapport) {
+            indhold += `<strong>🛠️ Internt notefelt / Rapport:</strong><br><span style="color:#60a5fa;">"${h.internRapport}"</span><hr style="border-color:#444;">`;
+        }
+        if(h.noteTilSms) {
+            indhold += `<strong>✉️ Note sendt til ejer:</strong><br><span style="color:#facc15;">"${h.noteTilSms}"</span><hr style="border-color:#444;">`;
+        }
+        
+        indhold += `<strong>💰 Regning:</strong><br>• ${h.prisLabel}: ${h.basisPris} kr.<br>`;
+        if(h.type === "Lindetpakker" && h.lindetAntal > 0) {
+            indhold += `• Linnedpakker (${h.lindetAntal} stk): ${h.lindetAntal * 150} kr.<br>`;
+        }
+        if(h.omkostninger && h.omkostninger.length > 0) {
+            h.omkostninger.forEach(o => { indhold += `• ${o.tekst}: ${o.pris} kr.<br>`; });
+        }
+        indhold += `<br>• <strong>Total: <span style="color:#4ade80;">${h.samletPris} kr.</span></strong><br>⏱️ Tid brugt: ${h.minutter} min.<hr style="border-color:#444;">`;
+        
+        if(h.fotoB64) indhold += `<strong>📸 Gemt fotodokumentation:</strong><br><img src="${h.fotoB64}" style="max-width:100%; border-radius:6px; margin-top:5px;">`;
+
+        document.getElementById('historik-modal').style.display = 'flex';
+        document.getElementById('historik-detaljer-indhold').innerHTML = indhold;
+        
+        let ramme = document.getElementById('historik-betalings-knap-ramme');
+        ramme.innerHTML = !h.betalt ? `<button onclick="markerSomBetalt(${h._idTid}, true)" style="background:#16a34a;">💵 Markér som BETALT</button>` : `<button onclick="markerSomBetalt(${h._idTid}, false)" style="background:#4b5563;">⚠️ Sæt til IKKE BETALT</button>`;
+        ramme.innerHTML += `<button onclick="sletFraHistorik(${h._idTid})" class="btn-slet" style="margin-top:15px; font-size:13px; padding:8px;">❌ Slet opgave permanent</button>`;
+    }
+
+    function markerSomBetalt(idTid, nyStatus) {
+        let h = historik.find(item => item._idTid === idTid);
+        if(h) { h.betalt = nyStatus; gemAltTilHukommelse(); document.getElementById('historik-modal').style.display = 'none'; bygHistorik(); }
+    }
+    
+    function sletFraHistorik(idTid) {
+        if(confirm("Vil du slette denne afsluttede opgave permanent fra historikken? Beløbet vil også forsvinde fra regnskabet.")) {
+            historik = historik.filter(item => item._idTid !== idTid);
+            gemAltTilHukommelse(); document.getElementById('historik-modal').style.display = 'none'; bygHistorik();
+        }
+    }
+
+    function eksporterKvitteringPDF(idTid) {
+        let h = historik.find(item => item._idTid === idTid); if(!h) return;
+        let tLabel = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel}` : (h.type === "Lindetpakker" ? `Linnedpakker (${h.lindetAntal} stk)` : h.type);
+        
+        let printVindue = window.open('', '_blank');
+        printVindue.document.write(`
+            <html>
+            <head>
+                <title>Kvittering - ${h.adresse}</title>
+                <style>
+                    body { font-family: sans-serif; padding: 40px; color: #333; }
+                    .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 30px; }
+                    .title { font-size: 26px; font-weight: bold; color: #2563eb; }
+                    .meta-grid { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 30px; line-height: 1.6; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th { background: #f3f4f6; text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
+                    td { padding: 10px; border-bottom: 1px solid #eee; }
+                    .total-række { font-weight: bold; font-size: 16px; background: #fafafa; }
+                    .footer { margin-top: 5px; border-top: 1px solid #ddd; padding-top: 15px; font-size: 12px; color: #666; text-align: center; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="title">KVITTERING</div>
+                    <div>Din Poolmand • Tlf: 28 68 88 98</div>
+                </div>
+                <div class="meta-grid">
+                    <div>
+                        <strong>Udført hos:</strong><br>
+                        ${h.ejerNavn || 'Husejer'}<br>
+                        ${h.adresse}<br>
+                        ${h.postnr || ''} ${h.by || ''}
+                    </div>
+                    <div style="text-align: right;">
+                        <strong>Dato:</strong> ${h.dato}<br>
+                        <strong>Betalingsstatus:</strong> Betalt<br>
+                        <strong>Id-reference:</strong> #Q-${h._idTid}
+                    </div>
+                </div>
+                <h3>Specifikation af arbejde:</h3>
+                <table>
+                    <thead>
+                        <tr><th>Beskrivelse</th><th style="text-align: right;">Pris</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>${tLabel}</td><td style="text-align: right;">${h.basisPris} kr.</td></tr>`);
+                        
+        if(h.type === "Lindetpakker" && h.lindetAntal > 0) {
+            printVindue.document.write(`
+                        <tr><td>Linnedpakker udbringning (${h.lindetAntal} stk)</td><td style="text-align: right;">${h.lindetAntal * 150} kr.</td></tr>`);
+        }
+        if(h.omkostninger && h.omkostninger.length > 0) {
+            h.omkostninger.forEach(o => {
+                printVindue.document.write(`
+                        <tr><td>Ekstraomkostning: ${o.tekst}</td><td style="text-align: right;">${o.pris} kr.</td></tr>`);
+            });
+        }
+        printVindue.document.write(`
+                        <tr class="total-række"><td>I alt (DKK):</td><td style="text-align: right; color:#16a34a;">${h.samletPris} kr.</td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top: 40px; background: #f9fafb; padding: 15px; border-radius: 6px; font-size: 13px;">
+                    <strong>Bakmærkning:</strong> Beløbet is registreret som modtaget via MobilePay. Tak for handlen!
+                </div>
+                <div class="footer">Din Poolmand • Mobil: 28 68 88 98 • MobilePay: 28 68 88 98</div>
+                <script>window.onload = function() { window.print(); };<\/script>
+            </body>
+            </html>
+        `);
+        printVindue.document.close();
+    }
+    
+    function aabenKortNavigation() {
+        let adr = document.getElementById('m-adresse').innerText;
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}`, '_blank');
+    }
+
+    function beregnKemi() {
+        let mk = parseFloat(document.getElementById('kemi-maalt-klor').value) || 0;
+        let ok = parseFloat(document.getElementById('kemi-oensket-klor').value) || 0;
+        let mp = parseFloat(document.getElementById('kemi-maalt-ph').value) || 0;
+        let op = parseFloat(document.getElementById('kemi-oensket-ph').value) || 0;
+        
+        let diffKlor = ok - mk; let daytabs = 0; let boost = 0; let antiklor = 0;
+        if (diffKlor > 0) {
+            daytabs = Math.round((diffKlor * aktuelM3Mængde) / 2.5);
+            boost = Math.round(diffKlor * aktuelM3Mængde * 15);
+        } else if (diffKlor < 0) {
+            antiklor = Math.round(Math.abs(diffKlor) * aktuelM3Mængde * 12);
+        }
+        
+        let diffPh = mp - op; let phminus = 0; let phplus = 0;
+        if (diffPh > 0.1) { phminus = Math.round(diffPh * aktuelM3Mængde * 10); } 
+        else if (diffPh < -0.1) { phplus = Math.round(Math.abs(diffPh) * aktuelM3Mængde * 10); }
+        
+        document.getElementById('res-daytabs').innerText = daytabs;
+        document.getElementById('res-boost').innerText = boost;
+        document.getElementById('res-antiklor').innerText = antiklor;
+        document.getElementById('res-phminus').innerText = phminus;
+        document.getElementById('res-phplus').innerText = phplus;
+    }
+
+    function eksporterSikkerhedskopi() {
+        let samletEksportData = {
+            kartotek: kartotek,
+            opgaver: opgaver,
+            historik: historik,
+            version: 51,
+            eksporteretDato: new Date().toISOString()
+        };
+        
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(samletEksportData));
+        let downloadAnker = document.createElement('a');
+        
+        let d = new Date();
+        let datoFormat = `${d.getDate()}-${d.getMonth()+1}-${d.getFullYear()}`;
+        
+        downloadAnker.setAttribute("href", dataStr);
+        downloadAnker.setAttribute("download", `din_poolmand_backup_${datoFormat}.json`);
+        document.body.appendChild(downloadAnker);
+        downloadAnker.click();
+        downloadAnker.remove();
+    }
+
+    function importerSikkerhedskopi(event) {
+        let fil = event.target.files[0]; if (!fil) return;
+        let r = new FileReader();
+        r.onload = function(e) {
+            try {
+                let indlaestData = JSON.parse(e.target.result);
+                if (indlaestData.kartotek && indlaestData.opgaver && indlaestData.historik) {
+                    if (confirm("Vil du overskrive appens nuværende data med denne backup-fil?")) {
+                        kartotek = indlaestData.kartotek;
+                        opgaver = indlaestData.opgaver;
+                        historik = indlaestData.historik;
+                        gemAltTilHukommelse();
+                        bygOpgaveliste();
+                        alert("Backup indlæst med succes! Appen er gendannet.");
+                    }
+                } else {
+                    alert("Fejl: Filen indeholder ikke gyldig app-data.");
+                }
+            } catch (err) {
+                alert("Kunne ikke læse filen. Sørg for det er en rigtig .json backup-fil.");
+            }
+        };
+        r.readAsText(fil);
+    }
+
+    function lukOpgaveModal() { document.getElementById('opgave-modal').style.display = 'none'; bygOpgaveliste(); }
+    function sletOpgave(id) { if(confirm("Vil du slette denne opgave?")) { opgaver = opgaver.filter(o => o.id !== id); gemAltTilHukommelse(); bygOpgaveliste(); } }
+    
+    function haandterSmsNoteInput() {
+        let o = opgaver.find(item => item.id === aktivOpgaveId);
+        if(o) { o.smsNoteTilEjer = document.getElementById('m-sms-note').value; gemAltTilHukommelse(); }
+    }
+    function haandterInternRapportInput() {
+        let o = opgaver.find(item => item.id === aktivOpgaveId);
+        if(o) { o.udfoertRapport = document.getElementById('m-adhoc-udfoert-tekst').value; gemAltTilHukommelse(); }
+    }
+    function haardNulstilApp() {
+        if(confirm("BEMÆRK: Dette sletter alt data i appen permanent! Er du sikker?")) {
+            localStorage.clear(); window.location.reload();
+        }
+    }
+    
+    document.getElementById('m-sms-note').addEventListener('input', haandterSmsNoteInput);
+    document.getElementById('m-adhoc-udfoert-tekst').addEventListener('input', haandterInternRapportInput);
+
+    initialiserData();
+</script>
 </body>
 </html>

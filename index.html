@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pool Kontrol - Version 51 + Opdatering 1</title>
+    <title>Pool Kontrol - Version 51</title>
     <style>
-        /* --- DESIGN SYSTEM & TEMAVARIABLER (FRA V51) --- */
         :root {
             --bg-color: #000000;
             --surface-color: #121212;
             --surface-card: #1e1e1e;
             --text-main: #ffffff;
             --text-muted: #aaaaaa;
-            --accent-color: #00e676; /* Grøn */
-            --danger-color: #ff5252; /* Rød */
+            --accent-color: #00e676;
+            --danger-color: #ff5252;
             --border-color: #333333;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
@@ -43,7 +42,6 @@
             padding-bottom: 90px;
         }
 
-        /* --- TOP FANER --- */
         .top-nav {
             display: flex;
             background-color: var(--surface-color);
@@ -70,7 +68,6 @@
             border-bottom: 3px solid var(--text-main);
         }
 
-        /* --- SIDER / VIEWS --- */
         .view-section {
             display: none;
             padding: 15px;
@@ -80,7 +77,6 @@
             display: block;
         }
 
-        /* --- FORMULARER & INDTASTNING --- */
         .opret-container {
             background-color: var(--surface-card);
             border: 1px solid var(--border-color);
@@ -127,29 +123,12 @@
             cursor: pointer;
         }
 
-        /* --- OPGAVEKORT (OPDATERING 1 VARIANT) --- */
         .task-card {
             background-color: var(--surface-card);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 15px;
             margin-bottom: 12px;
-            position: relative;
-        }
-
-        .task-card.overskredet {
-            border: 2px solid var(--danger-color);
-        }
-
-        .badge-danger {
-            background-color: var(--danger-color);
-            color: white;
-            font-size: 11px;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-bottom: 6px;
         }
 
         .task-header {
@@ -186,69 +165,6 @@
             cursor: pointer;
         }
 
-        /* --- KALENDER SYSTEM --- */
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .weekday-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            font-weight: bold;
-            padding: 5px 0;
-        }
-
-        .calendar-day {
-            background-color: var(--surface-card);
-            border: 1px solid var(--border-color);
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .calendar-day.empty {
-            background: none;
-            border: none;
-            cursor: default;
-        }
-
-        .calendar-day.status-normal { color: var(--text-main); }
-        .calendar-day.status-planned { color: var(--accent-color); }
-        .calendar-day.status-completed { color: var(--danger-color); }
-        
-        .calendar-day.selected {
-            outline: 2px solid var(--text-main);
-        }
-
-        .calendar-day.today::after {
-            content: '';
-            position: absolute;
-            bottom: 3px;
-            width: 4px;
-            height: 4px;
-            background-color: var(--text-main);
-            border-radius: 50%;
-        }
-
-        /* --- NAVIGATION I BUNDEN (FRA VERSION 51) --- */
         .bottom-bar {
             position: fixed;
             bottom: 0;
@@ -274,12 +190,6 @@
             font-weight: 500;
         }
 
-        .bottom-btn span {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
-
-        /* --- MODAL / OVERLAY FOR VÆRKTØJ & INDSTILLINGER (FRA V51) --- */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -287,7 +197,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0,0,0,0,7);
+            background-color: rgba(0,0,0,0.7);
             z-index: 200;
             padding: 20px;
             align-items: center;
@@ -334,7 +244,7 @@
 
     <nav class="top-nav">
         <button class="nav-btn active" onclick="switchView('tasks-view', this)">Opgaver</button>
-        <button class="nav-btn" onclick="switchView('calendar-view', this); renderCalendar();">Kalender</button>
+        <button class="nav-btn" onclick="switchView('calendar-view', this)">Kalender</button>
         <button class="nav-btn" onclick="switchView('customers-view', this)">Kunder</button>
     </nav>
 
@@ -349,37 +259,16 @@
                 <label>Dato</label>
                 <input type="date" id="task-date-input" class="form-control">
             </div>
-            <button class="btn-primary" onclick="createTaskFromUI('task-customer-select', 'task-date-input')">Gem Opgave</button>
+            <button class="btn-primary" onclick="createTask()">Gem Opgave</button>
         </div>
 
-        <h2 class="section-title">Ugens overblik</h2>
+        <h2 class="section-title">Dagens opgaver</h2>
         <div id="active-tasks-list"></div>
     </main>
 
     <main id="calendar-view" class="view-section">
-        <div class="calendar-header">
-            <button class="btn-primary" style="width: auto; padding: 5px 15px;" onclick="changeMonth(-1)">< Måned</button>
-            <h3 id="calendar-month-title">Maj 2026</h3>
-            <button class="btn-primary" style="width: auto; padding: 5px 15px;" onclick="changeMonth(1)">Måned ></button>
-        </div>
-
-        <div class="calendar-grid" id="calendar-grid-container"></div>
-
-        <div id="calendar-opret-box" class="opret-container" style="display: none;">
-            <h3>Opret opgave på valgt dato</h3>
-            <div class="form-group">
-                <label>Vælg kunde</label>
-                <select id="cal-customer-select" class="form-control"></select>
-            </div>
-            <div class="form-group">
-                <label>Dato</label>
-                <input type="date" id="cal-date-input" class="form-control" readonly>
-            </div>
-            <button class="btn-primary" onclick="createTaskFromUI('cal-customer-select', 'cal-date-input')">Gem Opgave</button>
-        </div>
-
-        <h3 class="section-title" id="selected-date-title" style="margin-top: 15px;">Vælg en dato for at se opgaver</h3>
-        <div id="calendar-tasks-list"></div>
+        <h2 class="section-title">Kalender</h2>
+        <p style="color:var(--text-muted);">Version 51 standard kalendervisning.</p>
     </main>
 
     <main id="customers-view" class="view-section">
@@ -399,7 +288,7 @@
             </div>
             <div class="form-group">
                 <label>Faste kemiværdier / Noter</label>
-                <textarea id="cust-notes" class="form-control" rows="3" placeholder="Faste noter til denne kunde..."></textarea>
+                <textarea id="cust-notes" class="form-control" rows="3" placeholder="Faste noter..."></textarea>
             </div>
             <button class="btn-primary" onclick="createCustomer()">Opret Kunde</button>
         </div>
@@ -418,7 +307,6 @@
                 <h3>🛠️ Værktøjer</h3>
                 <button class="close-modal" onclick="closeModal('tools-modal')">Luk</button>
             </div>
-            <p style="color:var(--text-muted); margin-bottom:15px;">Gamle beregnere og værktøjer herunder:</p>
             <div class="form-group">
                 <label>Vandvolumen (m³)</label>
                 <input type="number" class="form-control" placeholder="Indtast m³">
@@ -434,9 +322,9 @@
                 <button class="close-modal" onclick="closeModal('settings-modal')">Luk</button>
             </div>
             <div class="form-group">
-                <button class="btn-primary" style="margin-bottom:10px;" onclick="toggleTheme()">Skift Tema (Lys/Mørk)</button>
+                <button class="btn-primary" style="margin-bottom:10px;" onclick="toggleTheme()">Skift Tema</button>
                 <button class="btn-primary" style="margin-bottom:10px; background-color:var(--surface-color); color:var(--text-main); border:1px solid var(--border-color);">Lav Backup</button>
-                <button class="btn-primary" style="background-color:var(--danger-color); color:white;" onclick="alert('Nulstiller appen...')">Nulstil App-data</button>
+                <button class="btn-primary" style="background-color:var(--danger-color); color:white;" onclick="alert('Nulstiller data...')">Nulstil App-data</button>
             </div>
         </div>
     </div>
@@ -444,19 +332,16 @@
     <script>
         let customers = JSON.parse(localStorage.getItem('pool_customers')) || [];
         let tasks = JSON.parse(localStorage.getItem('pool_tasks')) || [];
-        
-        let currentCalendarDate = new Date();
-        let selectedCalendarDate = new Date();
 
         function saveData() {
             localStorage.setItem('pool_customers', JSON.stringify(customers));
             localStorage.setItem('pool_tasks', JSON.stringify(tasks));
         }
 
-        // Modals kontrol (Fra v51)
         function openModal(modalId) {
             document.getElementById(modalId).classList.add('active');
         }
+        
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
         }
@@ -464,7 +349,6 @@
         function switchView(viewId, btnElement) {
             document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            
             document.getElementById(viewId).classList.add('active');
             btnElement.classList.add('active');
         }
@@ -479,30 +363,13 @@
             return [year, month, day].join('-');
         }
 
-        function getThisWeeksRange() {
-            let today = new Date();
-            let dayOfWeek = today.getDay();
-            let distanceFromMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-            let monday = new Date(today);
-            monday.setDate(today.getDate() + distanceFromMonday);
-            monday.setHours(0,0,0,0);
-            let sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
-            sunday.setHours(23,59,59,999);
-            return { monday, sunday };
-        }
-
         function updateCustomerDropdowns() {
-            const selects = ['task-customer-select', 'cal-customer-select'];
-            selects.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.innerHTML = customers.map(c => `<option value="${c.id}">${c.name} - ${c.address}</option>`).join('');
-                if(customers.length === 0) el.innerHTML = '<option>Opret en kunde først...</option>';
-            });
+            const select = document.getElementById('task-customer-select');
+            if (!select) return;
+            select.innerHTML = customers.map(c => `<option value="${c.id}">${c.name} - ${c.address}</option>`).join('');
+            if(customers.length === 0) select.innerHTML = '<option>Opret en kunde først...</option>';
         }
 
-        // Fuld kundeoprettelse fra v51 bevaret intakt
         function createCustomer() {
             const name = document.getElementById('cust-name').value.trim();
             const address = document.getElementById('cust-address').value.trim();
@@ -532,9 +399,9 @@
             alert('Kunde oprettet succesfuldt!');
         }
 
-        function createTaskFromUI(selectId, dateInputId) {
-            const customerId = document.getElementById(selectId).value;
-            const dateValue = document.getElementById(dateInputId).value;
+        function createTask() {
+            const customerId = document.getElementById('task-customer-select').value;
+            const dateValue = document.getElementById('task-date-input').value;
 
             if(!customerId || !dateValue) return alert('Vælg en kunde og en dato.');
 
@@ -542,15 +409,12 @@
                 id: Date.now().toString(),
                 customerId: customerId,
                 date: dateValue,
-                completed: false,
-                completedDate: null
+                completed: false
             };
 
             tasks.push(newTask);
             saveData();
-
             renderActiveTasks();
-            renderCalendar();
             alert('Opgave oprettet!');
         }
 
@@ -558,10 +422,8 @@
             const task = tasks.find(t => t.id === taskId);
             if(task) {
                 task.completed = true;
-                task.completedDate = formatDateString(new Date()); // Flyttes automatisk til i dag ved afslutning
                 saveData();
                 renderActiveTasks();
-                renderCalendar();
             }
         }
 
@@ -570,47 +432,9 @@
             if(!listContainer) return;
             listContainer.innerHTML = '';
 
-            const { monday, sunday } = getThisWeeksRange();
-            const todayStr = formatDateString(new Date());
+            const active = tasks.filter(t => !t.completed);
 
-            const overskredne = [];
-            const denneUge = [];
-
-            tasks.forEach(t => {
-                if (t.completed) return;
-
-                let taskDate = new Date(t.date);
-                taskDate.setHours(0,0,0,0);
-
-                if (taskDate < monday) {
-                    overskredne.push(t);
-                } else if (taskDate >= monday && taskDate <= sunday) {
-                    if (t.date >= todayStr) {
-                        denneUge.push(t);
-                    }
-                }
-            });
-
-            denneUge.sort((a,b) => a.date.localeCompare(b.date));
-
-            // Overskredne øverst (Med rød kant fra Opdatering 1)
-            overskredne.forEach(t => {
-                const customer = customers.find(c => c.id === t.customerId) || {name: 'Ukendt', address: 'Ukendt'};
-                listContainer.innerHTML += `
-                    <div class="task-card overskredet">
-                        <span class="badge-danger">⚠️ Overskredet</span>
-                        <div class="task-header">
-                            <div class="task-title">${customer.name}</div>
-                            <div class="task-date">${t.date}</div>
-                        </div>
-                        <div class="task-details">${customer.address}</div>
-                        <button class="btn-complete" onclick="completeTask('${t.id}')">Udført</button>
-                    </div>
-                `;
-            });
-
-            // Ugens planlagte
-            denneUge.forEach(t => {
+            active.forEach(t => {
                 const customer = customers.find(c => c.id === t.customerId) || {name: 'Ukendt', address: 'Ukendt'};
                 listContainer.innerHTML += `
                     <div class="task-card">
@@ -624,110 +448,8 @@
                 `;
             });
 
-            if(overskredne.length === 0 && denneUge.length === 0) {
-                listContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">Ingen flere opgaver for denne uge!</p>';
-            }
-        }
-
-        function changeMonth(direction) {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
-            renderCalendar();
-        }
-
-        function selectDate(dateStr) {
-            selectedCalendarDate = new Date(dateStr);
-            renderCalendar();
-        }
-
-        function renderCalendar() {
-            const container = document.getElementById('calendar-grid-container');
-            const monthTitle = document.getElementById('calendar-month-title');
-            if(!container) return;
-
-            container.innerHTML = '';
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
-            
-            const monthNames = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
-            monthTitle.innerText = `${monthNames[month]} ${year}`;
-
-            const days = ['Ma', 'Ti', 'On', 'To', 'Fr', 'Lø', 'Sø'];
-            days.forEach(d => container.innerHTML += `<div class="weekday-label">${d}</div>`);
-
-            let firstDay = new Date(year, month, 1).getDay();
-            let leadingSpaces = firstDay === 0 ? 6 : firstDay - 1;
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-            for(let i = 0; i < leadingSpaces; i++) {
-                container.innerHTML += `<div class="calendar-day empty"></div>`;
-            }
-
-            const todayStr = formatDateString(new Date());
-            const selectedStr = formatDateString(selectedCalendarDate);
-
-            for(let day = 1; day <= daysInMonth; day++) {
-                let d = new Date(year, month, day);
-                let dStr = formatDateString(d);
-                let statusClass = 'status-normal';
-
-                const dayTasks = tasks.filter(t => (t.completed ? t.completedDate : t.date) === dStr);
-                if (dayTasks.length > 0) {
-                    const harPlanlagte = dayTasks.some(t => !t.completed && t.date >= todayStr);
-                    const harUdførte = dayTasks.some(t => t.completed);
-                    if (harPlanlagte) statusClass = 'status-planned';
-                    else if (harUdførte) statusClass = 'status-completed';
-                }
-
-                let isToday = dStr === todayStr ? 'today' : '';
-                let isSelected = dStr === selectedStr ? 'selected' : '';
-
-                container.innerHTML += `
-                    <div class="calendar-day ${statusClass} ${isToday} ${isSelected}" onclick="selectDate('${dStr}')">
-                        ${day}
-                    </div>
-                `;
-            }
-            renderCalendarDayTasks(selectedStr);
-        }
-
-        function renderCalendarDayTasks(dateStr) {
-            const listContainer = document.getElementById('calendar-tasks-list');
-            const title = document.getElementById('selected-date-title');
-            const opretBox = document.getElementById('calendar-opret-box');
-            const calDateInput = document.getElementById('cal-date-input');
-
-            title.innerText = `Opgaver d. ${dateStr}`;
-            listContainer.innerHTML = '';
-
-            const dayTasks = tasks.filter(t => (t.completed ? t.completedDate : t.date) === dateStr);
-
-            dayTasks.forEach(t => {
-                const customer = customers.find(c => c.id === t.customerId) || {name: 'Ukendt', address: 'Ukendt'};
-                let statusText = t.completed ? `<span style="color:var(--danger-color); font-weight:bold;">✓ Udført</span>` : `<span>Planlagt</span>`;
-                let actionBtn = !t.completed ? `<button class="btn-complete" style="margin-top:5px;" onclick="completeTask('${t.id}')">Udført</button>` : '';
-
-                listContainer.innerHTML += `
-                    <div class="task-card">
-                        <div class="task-header">
-                            <div class="task-title">${customer.name}</div>
-                            <div class="task-date">${statusText}</div>
-                        </div>
-                        <div class="task-details">${customer.address}</div>
-                        ${actionBtn}
-                    </div>
-                `;
-            });
-
-            if(dayTasks.length === 0) {
-                listContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Ingen opgaver denne dag.</p>';
-            }
-
-            const todayStr = formatDateString(new Date());
-            if(dateStr >= todayStr) {
-                opretBox.style.display = 'block';
-                calDateInput.value = dateStr;
-            } else {
-                opretBox.style.display = 'none';
+            if(active.length === 0) {
+                listContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">Ingen aktive opgaver.</p>';
             }
         }
 
@@ -739,7 +461,7 @@
                     <div class="task-title">${c.name}</div>
                     <div class="task-details"><b>Adresse:</b> ${c.address}</div>
                     ${c.phone ? `<div class="task-details"><b>Tlf:</b> ${c.phone}</div>` : ''}
-                    ${c.notes ? `<div class="task-details" style="font-style:italic; color:var(--text-muted);"><b>Faste noter:</b> ${c.notes}</div>` : ''}
+                    ${c.notes ? `<div class="task-details" style="font-style:italic; color:var(--text-muted);"><b>Noter:</b> ${c.notes}</div>` : ''}
                 </div>
             `).join('');
             if(customers.length === 0) container.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Ingen kunder oprettet endnu.</p>';

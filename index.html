@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v53 - Kalender Popup</title>
+    <title>Pool Service App v54 - Frekvens & 2-Aars Grænse</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' fill='%23115d75'/><text x='50%25' y='55%25' font-family='Arial Black, sans-serif' font-weight='900' font-size='16' fill='%23ffffff' text-anchor='middle'>DIN POOLMAND</text><line x1='20' y1='115' x2='160' y2='115' stroke='%23ffffff' stroke-width='3'/></svg>">
@@ -249,6 +249,23 @@
 
         <div class="form-group" id="felt-pool-m3" style="display:none;"><label>Pool størrelse (m³)</label><input id="hus-pool" type="number" value="27"></div>
         <div class="form-group" id="felt-spa-liter" style="display:none;"><label>Spa størrelse (Liter)</label><input id="hus-spa" type="number" value="1500"></div>
+
+        <div class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-top:10px;">
+            <label style="color:#facc15; font-weight:bold; margin-bottom:5px;">📅 Frekvens & Service-historik</label>
+            <div class="form-group">
+                <label>Frekvensinterval for besøg</label>
+                <select id="hus-frekvens">
+                    <option value="manuel">Kun manuel oprettelse (Ingen frekvens)</option>
+                    <option value="7">Hver uge (7 dage)</option>
+                    <option value="14">Hver 2. uge (14 dage)</option>
+                    <option value="30">Hver måned (30 dage)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Sidste udførte service-dato (Sættes automatisk ved afslutning)</label>
+                <input id="hus-sidste-service" type="date">
+            </div>
+        </div>
         
         <button id="genvej-opret-opg-btn" onclick="genvejHusTilOpgave()" style="background:#2563eb; display:none; margin-bottom:8px;">➕ Opret Opgave</button>
 
@@ -669,7 +686,6 @@
         }
     }
 
-    // NY FUNKTION DER ÅBNER POPUP BOKSEN VED VALG AF DATO
     function valgKalenderDato(dStreng) {
         kalenderValgtDatoStreng = dStreng;
         
@@ -680,7 +696,6 @@
         let nu = new Date();
         let iDagStreng = nu.toISOString().split('T')[0];
         
-        // 1. Opret opgave-knappen øverst i boksen
         let knapRamme = document.getElementById('kal-modal-opret-ramme');
         if(dStreng >= iDagStreng) {
             knapRamme.innerHTML = `<button onclick="aabenOpretOpgaveFraKalender('${dStreng}')" style="background:#2563eb; margin:0 0 10px 0; padding:12px;">➕ Opret opgave på denne dato</button>`;
@@ -688,14 +703,12 @@
             knapRamme.innerHTML = `<small style="color:#ef4444; font-weight:bold; display:block; margin-bottom:5px;">🔒 Fortiden er låst for oprettelse (Historik-visning)</small>`;
         }
         
-        // 2. Historik og planer nedenunder
         let listeRamme = document.getElementById('kal-modal-opgaveliste');
         listeRamme.innerHTML = "";
         
         let dagensAktive = opgaver.filter(o => o.dato === dStreng);
         let dagensHistorik = historik.filter(h => h.dato === dStreng);
         
-        // HVIS DER IKKE ER NOGEN OPGAVER, VISES BESKEDEN "Ingen opgaver i dag"
         if(dagensAktive.length === 0 && dagensHistorik.length === 0) {
             listeRamme.innerHTML = `<p style="color:#cbd5e1; font-size:14px; text-align:center; margin:20px 0; font-weight:bold; background:#2a2a2a; padding:15px; border-radius:6px; border:1px dashed #555;">Ingen opgaver i dag</p>`;
             document.getElementById('kalender-klik-modal').style.display = 'flex';
@@ -724,7 +737,6 @@
                 </div>`;
         });
         
-        // Vis selve popup-boksen
         document.getElementById('kalender-klik-modal').style.display = 'flex';
     }
 
@@ -750,6 +762,13 @@
         listeKopi.forEach(h => {
             let fListe = []; if(h.hasPool) fListe.push("Pool"); if(h.hasSpa) fListe.push("Spa");
             let fTekst = fListe.length > 0 ? fListe.join(" + ") : "Ingen faciliteter";
+            
+            // Interval label-tekst
+            let frqLabel = "Manuel";
+            if(h.frekvens === "7") frqLabel = "Hver uge";
+            if(h.frekvens === "14") frqLabel = "Hver 2. uge";
+            if(h.frekvens === "30") frqLabel = "Hver måned";
+
             b.innerHTML += `
                 <div class="card" onclick="redigerHus(${h.id})">
                     <div class="card-actions">
@@ -757,7 +776,8 @@
                         <button class="action-btn" onclick="event.stopPropagation(); sletHus(${h.id})">❌</button>
                     </div>
                     <strong>${h.adresse}</strong> • 👤 ${h.ejerNavn || '-'}<br>
-                    <span style="font-size:12px;color:#9ca3af;">${h.postnr || ''} ${h.by || ''} (${fTekst})</span>
+                    <span style="font-size:12px;color:#9ca3af;">${h.postnr || ''} ${h.by || ''} (${fTekst})</span><br>
+                    <span style="font-size:11px;color:#facc15;">⏱️ Interval: ${frqLabel} ${h.sidsteService ? '• Sidste service: ' + h.sidsteService.split('-').reverse().join('.') : ''}</span>
                 </div>`;
         });
     }
@@ -951,6 +971,21 @@
 
         if(t === "Ad-hoc" && !tStr) { alert("Angiv venligst en titel til ad-hoc opgaven."); return; }
 
+        // VALIDERING AF 2-ÅRS REGLEN VED OPRETTELSE
+        let poolhus = kartotek.find(h => h.id === hId);
+        if(poolhus && poolhus.sidsteService) {
+            let valgtDato = new Date(d);
+            let sidsteServiceDato = new Date(poolhus.sidsteService);
+            
+            // Læg 2 år til sidste service
+            let toAarSiden = new Date(sidsteServiceDato);
+            toAarSiden.setFullYear(toAarSiden.getFullYear() + 2);
+            
+            if(valgtDato > toAarSiden) {
+                alert("⚠️ ADVARSEL:\nDet er over 2 år siden, at der sidst er udført service på dette hus!\n(Sidste service: " + poolhus.sidsteService.split('-').reverse().join('.') + ").\n\nFå foretaget et grundigt serviceeftersyn hurtigst muligt.");
+            }
+        }
+
         if(idSkjult) {
             let o = opgaver.find(item => item.id == idSkjult);
             if(o) { o.kartotekId = hId; o.dato = d; o.type = t; o.note = n; o.titel = tStr; o.prisForm = pForm; o.fastPris = fPris; o.lindetAntal = lAntal; }
@@ -980,7 +1015,10 @@
             kode: document.getElementById('hus-kode').value, placering: document.getElementById('hus-placering').value,
             note: document.getElementById('hus-note').value, hasPool: pB, hasSpa: sB,
             pool: parseFloat(document.getElementById('hus-pool').value) || 0,
-            spa: parseFloat(document.getElementById('hus-spa').value) || 0
+            spa: parseFloat(document.getElementById('hus-spa').value) || 0,
+            // GEM NYE VÆRDIER
+            frekvens: document.getElementById('hus-frekvens').value,
+            sidsteService: document.getElementById('hus-sidste-service').value
         };
 
         if(idSkjult) {
@@ -1003,6 +1041,11 @@
         document.getElementById('hus-placering').value = ""; document.getElementById('hus-note').value = "";
         document.getElementById('hus-has-pool').checked = true; document.getElementById('hus-has-spa').checked = false;
         document.getElementById('hus-pool').value = "27"; document.getElementById('hus-spa').value = "1500";
+        
+        // Nulstil frekvensfelter
+        document.getElementById('hus-frekvens').value = "manuel";
+        document.getElementById('hus-sidste-service').value = "";
+
         styreHusStaerrelseFelter(); visSide('side-opret-hus');
     }
 
@@ -1021,6 +1064,11 @@
         document.getElementById('hus-placering').value = h.placering || ""; document.getElementById('hus-note').value = h.note || "";
         document.getElementById('hus-has-pool').checked = !!h.hasPool; document.getElementById('hus-has-spa').checked = !!h.hasSpa;
         document.getElementById('hus-pool').value = h.pool || 0; document.getElementById('hus-spa').value = h.spa || 0;
+        
+        // Indlæs frekvensværdier
+        document.getElementById('hus-frekvens').value = h.frekvens || "manuel";
+        document.getElementById('hus-sidste-service').value = h.sidsteService || "";
+
         styreHusStaerrelseFelter(); visSide('side-opret-hus');
     }
 
@@ -1057,6 +1105,19 @@
         document.getElementById('m-kemi-historik-udrul').style.display = 'none';
 
         let nRamme = document.getElementById('m-noter-ramme'); nRamme.innerHTML = "";
+        
+        // VISNING AF 2-ÅRS ADVARSELS-NOTAT DIREKTE I POPUPPENS TOP
+        if(hus.sidsteService) {
+            let opgDato = new Date(o.dato);
+            let serviceDato = new Date(hus.sidsteService);
+            let toAarFrem = new Date(serviceDato);
+            toAarFrem.setFullYear(toAarFrem.getFullYear() + 2);
+            
+            if(opgDato > toAarFrem) {
+                nRamme.innerHTML += `<div style="background:rgba(220,38,38,0.25); border: 2px solid #dc2626; padding:8px; margin-bottom:5px; font-size:13px; color:#f87171; border-radius:6px; font-weight:bold;">⚠️ BEMÆRK: Det er over 2 år siden sidste service eftersyn! (${hus.sidsteService.split('-').reverse().join('.')})</div>`;
+            }
+        }
+
         if(hus.note) nRamme.innerHTML += `<div style="background:rgba(56,189,248,0.15); border-left:4px solid #38bdf8; padding:8px; margin-bottom:5px; font-size:13px; color:white;"><strong>🏠 Fast note:</strong> ${hus.note}</div>`;
         if(o.note) nRamme.innerHTML += `<div style="background:rgba(250,204,21,0.15); border-left:4px solid #facc15; padding:8px; font-size:13px; color:white;"><strong>📝 Opgave note:</strong> ${o.note}</div>`;
 
@@ -1270,6 +1331,41 @@
             };
         }
 
+        // OPDATER SIDSTE SERVICE-DATO PÅ HUSET I KARTOTEKET (HVIS DET ER KONTROL-OPGAVE)
+        if(o.type !== "Lindetpakker") {
+            let kartotekIndex = kartotek.findIndex(h => h.id === o.kartotekId);
+            if(kartotekIndex !== -1) {
+                kartotek[kartotekIndex].sidsteService = o.dato; // Gemmer datoen fra den afsluttede opgave
+            }
+        }
+
+        // GENERER AUTOMATISK NÆSTE FREKVENS-OPGAVE HVIS INTERVAl ER VALGT
+        if(hus.frekvens && hus.frekvens !== "manuel" && o.type !== "Lindetpakker") {
+            let frekvensDage = parseInt(hus.frekvens);
+            let nuvaerendeDato = new Date(o.dato);
+            nuvaerendeDato.setDate(nuvaerendeDato.getDate() + frekvensDage);
+            let naesteDatoStreng = nuvaerendeDato.toISOString().split('T')[0];
+            
+            // Tjek om der i forvejen ligger en opgave af samme type på den fremtidige dato for at undgå dubletter
+            let dubletTjek = opgaver.some(eksisterende => eksisterende.kartotekId === o.kartotekId && eksisterende.dato === naesteDatoStreng && eksisterende.type === o.type);
+            
+            if(!dubletTjek) {
+                opgaver.push({
+                    id: Date.now() + 1, // Sikrer unikt ID
+                    kartotekId: o.kartotekId,
+                    dato: naesteDatoStreng,
+                    type: o.type,
+                    note: "Automatisk genereret ud fra frekvens",
+                    titel: o.titel || "",
+                    prisForm: o.prisForm || "time",
+                    fastPris: o.fastPris || 0,
+                    lindetAntal: 0,
+                    startet: null,
+                    omkostninger: []
+                });
+            }
+        }
+
         historik.push({
             _idTid: nu, adresse: hus.adresse, by: hus.by, postnr: hus.postnr, ejerNavn: hus.ejerNavn, type: o.type, titel: o.titel || '', dato: o.dato, minutter: minutterBrugt,
             basisPris: basisPris, prisLabel: prisLabel, omkostninger: [...midlertidigOmkListe],
@@ -1444,7 +1540,7 @@
     
     function aabenKortNavigation() {
         let adr = document.getElementById('m-adresse').innerText;
-        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}`, '_blank');
+        window.open(`http://maps.google.com/?q=${encodeURIComponent(adr)}`, '_blank');
     }
 
     function beregnKemi() {
@@ -1477,7 +1573,7 @@
             kartotek: kartotek,
             opgaver: opgaver,
             historik: historik,
-            version: 53,
+            version: 54,
             eksporteretDato: new Date().toISOString()
         };
         
@@ -1507,7 +1603,9 @@
                         historik = indlaestData.historik;
                         gemAltTilHukommelse();
                         bygOpgaveliste();
-                        if(document.getElementById('side-kalender').style.display === 'block') bygKalenderUdsigt();
+                        if(document.getElementById('side-kalender').style.display === 'block') {
+                            bygKalenderUdsigt();
+                        }
                         alert("Backup indlæst med succes! Appen er gendannet.");
                     }
                 } else {
@@ -1550,7 +1648,7 @@
         if(o) { o.udfoertRapport = document.getElementById('m-adhoc-udfoert-tekst').value; gemAltTilHukommelse(); }
     }
     function haardNulstilApp() {
-        if(confirm("BEMÆRK: Dette sletter alt data i appen permanent! Er du sikker?")) {
+        if(confirm("BEMÆRK: This sletter alt data i appen permanent! Er du sikker?")) {
             localStorage.clear(); window.location.reload();
         }
     }

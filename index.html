@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v51 - Opdateret Forside</title>
+    <title>Pool Service App v52 - Med Kalenderfane</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' fill='%23115d75'/><text x='50%25' y='55%25' font-family='Arial Black, sans-serif' font-weight='900' font-size='16' fill='%23ffffff' text-anchor='middle'>DIN POOLMAND</text><line x1='20' y1='115' x2='160' y2='115' stroke='%23ffffff' stroke-width='3'/></svg>">
@@ -15,8 +15,8 @@
         .container { max-width: 450px; margin: 0 auto; }
         .sektion { background: #1e1e1e; border: 1px solid #333; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: none; }
         h2 { color: white; margin-top: 0; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .top-bar { position: fixed; top: 0; left: 0; right: 0; background: #000; padding: 10px; text-align: center; border-bottom: 1px solid #222; z-index: 90; display: flex; justify-content: center; gap: 5px; }
-        .btn-nav { background: #374151; color: #d1d5db; border: none; padding: 10px 8px; font-size: 13px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; max-width: 100px; text-align: center; }
+        .top-bar { position: fixed; top: 0; left: 0; right: 0; background: #000; padding: 10px; text-align: center; border-bottom: 1px solid #222; z-index: 90; display: flex; justify-content: center; gap: 4px; }
+        .btn-nav { background: #374151; color: #d1d5db; border: none; padding: 10px 5px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; flex: 1; max-width: 90px; text-align: center; white-space: nowrap; }
         .btn-nav.active { background: #2563eb; color: white; }
         .card { background: #2a2a2a; border: 1px solid #444; padding: 12px; margin: 10px 0; border-radius: 8px; cursor: pointer; text-align: left; position: relative; }
         
@@ -74,12 +74,33 @@
         .bund-logo-container { position: fixed; bottom: 0; left: 0; right: 0; background: #121212; padding: 15px 0; display: flex; justify-content: center; z-index: 80; pointer-events: none; }
         .poolmand-logo-kort { background-color: #115d75; width: 180px; height: 95px; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); text-align: center; }
         .logo-tekst { color: #ffffff; font-family: 'Arial Black', Impact, sans-serif; font-size: 18px; font-weight: 900; letter-spacing: 0.5px; margin: 0; padding: 0; padding-bottom: 4px; border-bottom: 3px solid #ffffff; line-height: 1; width: 80%; text-align: center; }
+
+        /* NYE KALENDER STYLES (PUNKT 2) */
+        .kalender-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #222; padding: 5px 10px; border-radius: 6px; }
+        .kalender-header button { width: auto; margin: 0; padding: 6px 12px; background: #374151; font-size: 12px; }
+        .kalender-header h3 { margin: 0; font-size: 16px; color: white; }
+        .kalender-uger-navne { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; color: #9ca3af; margin-bottom: 5px; font-weight: bold; }
+        .kalender-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .kalender-dag { background: #262626; border: 1px solid #3a3a3a; padding: 10px 0; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; position: relative; color: #ffffff; transition: background 0.2s; }
+        .kalender-dag:active { background: #333; }
+        .kalender-dag.uden-maaned { opacity: 0.2; cursor: default; pointer-events: none; }
+        
+        /* FARVEKODER PÅ DATOER */
+        .kalender-dag.dag-normal { color: #ffffff; } /* Hvide tal i mørkt tema */
+        .kalender-dag.dag-fremtid-opg { color: #4ade80 !important; } /* Knivskarpe grønne tal */
+        .kalender-dag.dag-historik-opg { color: #f87171 !important; } /* Knivskarpe røde tal */
+        
+        /* BLÅ RING RUNDT OM I DAG */
+        .kalender-dag.dag-i-dag { border: 2px solid #2563eb !important; box-shadow: 0 0 6px rgba(37,99,235,0.6); border-radius: 6px; }
+        
+        .valgt-dato-info-boks { background: #222; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-top: 15px; min-height: 50px; }
     </style>
 </head>
 <body>
 
 <div class="top-bar">
     <button id="btn-nav-opg" onclick="visSide('side-opgaver')" class="btn-nav active">📋 Opgaver</button>
+    <button id="btn-nav-kal" onclick="visSide('side-kalender')" class="btn-nav">📅 Kalender</button>
     <button id="btn-nav-kar" onclick="visSide('side-kartotek')" class="btn-nav">🏠 Kunder</button>
     <button id="btn-nav-his" onclick="visSide('side-historik')" class="btn-nav">📜 Historik</button>
     <button id="btn-nav-reg" onclick="visSide('side-regnskab')" class="btn-nav">📊 Regnskab</button>
@@ -105,6 +126,25 @@
         </div>
 
         <button onclick="haardNulstilApp()" class="btn-slet" style="margin-top: 25px; font-size: 11px; padding: 6px;">⚠️ Nulstil app-data ved fejl</button>
+    </div>
+
+    <div id="side-kalender" class="sektion">
+        <h2>📅 Kalender</h2>
+        <div class="kalender-header">
+            <button onclick="skiftKalenderMaaned(-1)">◀ Forrige</button>
+            <h3 id="kalender-maaned-titel">Maj 2026</h3>
+            <button onclick="skiftKalenderMaaned(1)">Næste ▶</button>
+        </div>
+        <div class="kalender-uger-navne">
+            <div>MAN</div><div>TIR</div><div>ONS</div><div>TOR</div><div>FRE</div><div>LØR</div><div>SØN</div>
+        </div>
+        <div id="kalender-dage-grid" class="kalender-grid"></div>
+        
+        <div class="valgt-dato-info-boks">
+            <h3 id="valgt-dato-titel" style="margin-top:0; font-size:14px; color:#60a5fa; border-bottom:1px solid #444; padding-bottom:5px;">Vælg en dato</h3>
+            <div id="kalender-opret-knap-ramme"></div>
+            <div id="kalender-dags-opgaveliste" style="margin-top:10px;"></div>
+        </div>
     </div>
 
     <div id="side-kartotek" class="sektion">
@@ -339,6 +379,10 @@
     let aktuelM3Mængde = 0; let midlertidigOmkListe = []; let gemtFotoBase64 = null;
     let brugerLat = null; let brugerLng = null;
     let opgaveSortering = 'dato-asc'; let kartotekSortering = 'az'; let historikSortering = 'nyest';
+    
+    // Globale variabler til kalender
+    let kalenderAktuelDato = new Date();
+    let kalenderValgtDatoStreng = "";
 
     function findByFraPostnr(postnr) {
         let p = parseInt(postnr); if (isNaN(p)) return "";
@@ -361,8 +405,34 @@
             opgaver = JSON.parse(localStorage.getItem('pool_opgaver')) || [];
             historik = JSON.parse(localStorage.getItem('pool_historik')) || [];
         } catch(e) { kartotek = []; opgaver = []; historik = []; }
+        
+        // Tjek altid uafsluttede opgaver i fortiden, og flyt dem automatisk til d.d. ved opstart
+        tjekOgRulUafsluttedeOpgaver();
+        
         startGpsOvervaagning();
+        
+        // Sæt kalenderens standard valgte dato til i dag
+        let nu = new Date();
+        kalenderValgtDatoStreng = nu.toISOString().split('T')[0];
     }
+    
+    function tjekOgRulUafsluttedeOpgaver() {
+        let nu = new Date();
+        let iDagStreng = nu.toISOString().split('T')[0];
+        let harLavetAendring = false;
+        
+        opgaver.forEach(o => {
+            if (o.dato < iDagStreng) {
+                o.dato = iDagStreng;
+                o._uafsluttetFlyttet = true; 
+                harLavetAendring = true;
+            }
+        });
+        if (harLavetAendring) {
+            gemAltTilHukommelse();
+        }
+    }
+    
     function gemAltTilHukommelse() {
         localStorage.setItem('pool_kartotek', JSON.stringify(kartotek));
         localStorage.setItem('pool_opgaver', JSON.stringify(opgaver));
@@ -419,6 +489,7 @@
 
     function visSide(sideId) {
         document.getElementById('side-opgaver').style.display = 'none';
+        document.getElementById('side-kalender').style.display = 'none';
         document.getElementById('side-kartotek').style.display = 'none';
         document.getElementById('side-historik').style.display = 'none';
         document.getElementById('side-regnskab').style.display = 'none';
@@ -427,7 +498,9 @@
         
         let aktivSide = document.getElementById(sideId); if(aktivSide) aktivSide.style.display = 'block';
         document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-        if(sideId === 'side-opgaver') { document.getElementById('btn-nav-opg').classList.add('active'); bygOpgaveliste(); }
+        
+        if(sideId === 'side-opgaver') { document.getElementById('btn-nav-opg').classList.add('active'); tjekOgRulUafsluttedeOpgaver(); bygOpgaveliste(); }
+        if(sideId === 'side-kalender') { document.getElementById('btn-nav-kal').classList.add('active'); tjekOgRulUafsluttedeOpgaver(); bygKalenderUdsigt(); }
         if(sideId === 'side-kartotek') { document.getElementById('btn-nav-kar').classList.add('active'); bygKartotek(); }
         if(sideId === 'side-historik') { document.getElementById('btn-nav-his').classList.add('active'); bygHistorik(); }
         if(sideId === 'side-regnskab') { document.getElementById('btn-nav-reg').classList.add('active'); opdaterRegnskabstal(); }
@@ -455,21 +528,14 @@
     function bygOpgaveliste() {
         let b = document.getElementById('liste-beholder'); if(!b) return; b.innerHTML = '';
         
-        // DATO & UGE LOGIK (PUNKT 1)
         let nu = new Date();
         let iDagStreng = nu.toISOString().split('T')[0];
         
-        // Find mandag i denne uge
-        let dagNummer = nu.getDay(); // 0 = Søndag, 1 = Mandag...
+        let dagNummer = nu.getDay(); 
         let diffTilMandag = nu.getDate() - dagNummer + (dagNummer === 0 ? -6 : 1);
         let mandag = new Date(nu.setDate(diffTilMandag));
         mandag.setHours(0,0,0,0);
         
-        // Find søndag i denne uge
-        let soendag = new Date(mandag);
-        soendag.setDate(mandag.getDate() + 6);
-        soendag.setHours(23,59,59,999);
-
         let ugeDageStatus = [];
         for (let i = 0; i < 7; i++) {
             let d = new Date(mandag);
@@ -477,24 +543,10 @@
             ugeDageStatus.push(d.toISOString().split('T')[0]);
         }
 
-        // Tjek for uafsluttede opgaver i fortiden, og flyt dem til d.d. (og marker med rød border)
-        let harLavetAendring = false;
-        opgaver.forEach(o => {
-            if (o.dato < iDagStreng) {
-                o.dato = iDagStreng;
-                o._uafsluttetFlyttet = true; // Sætter flag til rød kant
-                harLavetAendring = true;
-            }
-        });
-        if (harLavetAendring) {
-            gemAltTilHukommelse();
-        }
-
         if(opgaver.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Ingen aktive opgaver.</p>'; return; }
         
         let listeKopi = JSON.parse(JSON.stringify(opgaver)); 
         
-        // Beregn afstande på kopien
         listeKopi.forEach(o => {
             let hus = kartotek.find(h => h.id === o.kartotekId);
             if(hus) {
@@ -503,7 +555,6 @@
             } else { o._afstand = null; }
         });
 
-        // Filtrer forsiden: SKAL VÆRE i denne uge, og MÅ IKKE være ældre end i dag (Skrumper dag for dag)
         listeKopi = listeKopi.filter(o => {
             let matcherUgen = (o.dato >= ugeDageStatus[0] && o.dato <= ugeDageStatus[6]);
             let erIkkeFortid = (o.dato >= iDagStreng);
@@ -512,7 +563,6 @@
 
         if(listeKopi.length === 0) { b.innerHTML = '<p style="color:#6b7280;text-align:center;">Ugens liste er tom!</p>'; return; }
 
-        // Sortering
         if(opgaveSortering === 'dato-asc') { 
             listeKopi.sort((x,y) => new Date(x.dato) - new Date(y.dato)); 
         } else if(opgaveSortering === 'dato-desc') { 
@@ -551,12 +601,11 @@
             let afstStr = (o._afstand !== null && o._afstand !== undefined) ? `📍 ${o._afstand.toFixed(1)} km` : `📍 -- km`;
             let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
             
-            // Sæt kanten baseret på logik-reglerne
             let kantKlasse = "";
             if (o._uafsluttetFlyttet || o.dato < iDagStreng) {
-                kantKlasse = "opg-overskredet"; // Rød kant for medbragte uafsluttede opgaver
+                kantKlasse = "opg-overskredet"; 
             } else if (o.dato === iDagStreng) {
-                kantKlasse = "opg-i-dag"; // Grøn kant for normale opgaver i dag
+                kantKlasse = "opg-i-dag"; 
             }
 
             b.innerHTML += `
@@ -572,6 +621,130 @@
                 </div>`;
         });
     }
+
+    /* NY KALENDER LOGIK (PUNKT 2) */
+    function skiftKalenderMaaned(retning) {
+        kalenderAktuelDato.setMonth(kalenderAktuelDato.getMonth() + retning);
+        bygKalenderUdsigt();
+    }
+
+    function bygKalenderUdsigt() {
+        let grid = document.getElementById('kalender-dage-grid'); if(!grid) return;
+        grid.innerHTML = '';
+        
+        let nu = new Date();
+        let iDagStreng = nu.toISOString().split('T')[0];
+        
+        let aar = kalenderAktuelDato.getFullYear();
+        let maaned = kalenderAktuelDato.getMonth();
+        
+        let maanederNavne = ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"];
+        document.getElementById('kalender-maaned-titel').innerText = maanederNavne[maaned] + " " + aar;
+        
+        let foersteDagIMaaned = new Date(aar, maaned, 1);
+        let startUgedag = foersteDagIMaaned.getDay(); // 0=Søn, 1=Man...
+        if(startUgedag === 0) startUgedag = 7; // Gør søndag til dag 7
+        
+        let antalDageIMaaned = new Date(aar, maaned + 1, 0).getDate();
+        
+        // Fyld tomme felter indtil første ugedag (Mandag)
+        for(let i = 1; i < startUgedag; i++) {
+            grid.innerHTML += `<div class="kalender-dag uden-maaned"></div>`;
+        }
+        
+        // Byg alle månedens dage
+        for(let dag = 1; dag <= antalDageIMaaned; dag++) {
+            let aktuelDatoObj = new Date(aar, maaned, dag);
+            // Korrigerer for tidszoneoffset, så vi får den korrekte ISO-streng
+            let offset = aktuelDatoObj.getTimezoneOffset();
+            aktuelDatoObj = new Date(aktuelDatoObj.getTime() - (offset*60*1000));
+            let dStreng = aktuelDatoObj.toISOString().split('T')[0];
+            
+            // Tjek opgavestatus på denne specifikke dag
+            let harAktiveOpgaver = opgaver.some(o => o.dato === dStreng);
+            let harHistorikOpgaver = historik.some(h => h.dato === dStreng);
+            
+            let farveKlasse = "dag-normal"; // Sort/Hvid standard
+            if (dStreng >= iDagStreng && harAktiveOpgaver) {
+                farveKlasse = "dag-fremtid-opg"; // Knivskarp Grøn
+            } else if (dStreng < iDagStreng && harHistorikOpgaver) {
+                farveKlasse = "dag-historik-opg"; // Knivskarp Rød
+            }
+            
+            // Giv i dag en flot blå ring/ramme
+            let iDagKlasse = (dStreng === iDagStreng) ? "dag-i-dag" : "";
+            
+            grid.innerHTML += `
+                <div class="kalender-dag ${farveKlasse} ${iDagKlasse}" onclick="valgKalenderDato('${dStreng}')">
+                    ${dag}
+                </div>`;
+        }
+        
+        valgKalenderDato(kalenderValgtDatoStreng);
+    }
+
+    function valgKalenderDato(dStreng) {
+        kalenderValgtDatoStreng = dStreng;
+        
+        let dele = dStreng.split('-');
+        let flotDatoStr = dele[2] + "." + dele[1] + "." + dele[0];
+        document.getElementById('valgt-dato-titel').innerText = "Dato valgt: " + flotDatoStr;
+        
+        let nu = new Date();
+        let iDagStreng = nu.toISOString().split('T')[0];
+        
+        // Feltet "Opret opgave" ligger allerøverst – men KUN fra dags dato og fremad (Fortiden spærret)
+        let knapRamme = document.getElementById('kalender-opret-knap-ramme');
+        if(dStreng >= iDagStreng) {
+            knapRamme.innerHTML = `<button onclick="aabenOpretOpgaveFraKalender('${dStreng}')" style="background:#2563eb; margin:0 0 10px 0; padding:10px;">➕ Opret opgave på denne dato</button>`;
+        } else {
+            knapRamme.innerHTML = `<small style="color:#ef4444; font-weight:bold; display:block; margin-bottom:5px;">🔒 Fortiden er låst for oprettelse (Historik-visning)</small>`;
+        }
+        
+        // Vis dagens opgaver under kalenderen
+        let listeRamme = document.getElementById('kalender-dags-opgaveliste');
+        listeRamme.innerHTML = "";
+        
+        // Tjek aktive opgaver
+        let dagensAktive = opgaver.filter(o => o.dato === dStreng);
+        // Tjek historik
+        let dagensHistorik = historik.filter(h => h.dato === dStreng);
+        
+        if(dagensAktive.length === 0 && dagensHistorik.length === 0) {
+            listeRamme.innerHTML = `<p style="color:#6b7280; font-size:13px; text-align:center; margin:10px 0;">Ingen planer eller historik på denne dag.</p>`;
+            return;
+        }
+        
+        // Tegn aktive opgaver på listen under kalenderen
+        dagensAktive.forEach(o => {
+            let hus = kartotek.find(h => h.id === o.kartotekId);
+            let adr = hus ? hus.adresse : "Ukendt";
+            let lbl = o.type === "Ad-hoc" ? `Ad-hoc: ${o.titel}` : o.type;
+            listeRamme.innerHTML += `
+                <div class="card opg-i-dag" onclick="aabenOpgaveModal(${o.id})">
+                    <strong>${adr}</strong> <span style="float:right; color:#4ade80; font-size:11px;">📋 PLANLAGT</span><br>
+                    <span style="font-size:12px; color:#9ca3af;">${lbl}</span>
+                </div>`;
+        });
+        
+        // Tegn afsluttede historiske opgaver på listen under kalenderen
+        dagensHistorik.forEach(h => {
+            let lbl = h.type === "Ad-hoc" ? `Ad-hoc: ${h.titel}` : h.type;
+            let statusFarve = h.betalt ? "#4ade80" : "#ef4444";
+            let statusTekst = h.betalt ? "BETALT" : "IKKE BETALT";
+            listeRamme.innerHTML += `
+                <div class="card" onclick="visHistorikDetaljer(${h._idTid})" style="border-left: 4px solid #dc2626;">
+                    <strong>${h.adresse}</strong> <span style="float:right; color:${statusFarve}; font-size:11px; font-weight:bold;">📜 ${statusTekst}</span><br>
+                    <span style="font-size:12px; color:#9ca3af;">${lbl} • Udført: ${h.samletPris} kr.</span>
+                </div>`;
+        });
+    }
+
+    function aabenOpretOpgaveFraKalender(dStreng) {
+        aabenOpretOpgaveSide();
+        document.getElementById('opret-opg-dato').value = dStreng;
+    }
+    /* SLUT PÅ KALENDER LOGIK */
 
     function bygKartotek() {
         let b = document.getElementById('kartotek-beholder'); b.innerHTML = '';
@@ -792,7 +965,14 @@
         } else {
             opgaver.push({ id: Date.now(), kartotekId: hId, dato: d, type: t, note: n, titel: tStr, prisForm: pForm, fastPris: fPris, lindetAntal: lAntal, startet: null, omkostninger: [] });
         }
-        gemAltTilHukommelse(); visSide('side-opgaver');
+        gemAltTilHukommelse(); 
+        
+        // Hvis vi står på kalendersiden, opdaterer vi den, ellers går vi til forsiden
+        if(document.getElementById('side-kalender').style.display === 'block') {
+            bygKalenderUdsigt();
+        } else {
+            visSide('side-opgaver');
+        }
     }
 
     function gemNytHus() {
@@ -1137,7 +1317,10 @@
         }
 
         opgaver = opgaver.filter(item => item.id !== aktivOpgaveId);
-        gemAltTilHukommelse(); lukOpgaveModal(); visSide('side-historik');
+        gemAltTilHukommelse(); lukOpgaveModal(); 
+        
+        // Gå til historikken bagefter
+        visSide('side-historik');
     }
 
     function visHistorikDetaljer(idTid) {
@@ -1271,7 +1454,7 @@
     
     function aabenKortNavigation() {
         let adr = document.getElementById('m-adresse').innerText;
-        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}&travelmode=driving`, '_blank');
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adr)}`, '_blank');
     }
 
     function beregnKemi() {
@@ -1304,7 +1487,7 @@
             kartotek: kartotek,
             opgaver: opgaver,
             historik: historik,
-            version: 51,
+            version: 52,
             eksporteretDato: new Date().toISOString()
         };
         
@@ -1334,6 +1517,7 @@
                         historik = indlaestData.historik;
                         gemAltTilHukommelse();
                         bygOpgaveliste();
+                        if(document.getElementById('side-kalender').style.display === 'block') bygKalenderUdsigt();
                         alert("Backup indlæst med succes! Appen er gendannet.");
                     }
                 } else {
@@ -1346,8 +1530,26 @@
         r.readAsText(fil);
     }
 
-    function lukOpgaveModal() { document.getElementById('opgave-modal').style.display = 'none'; bygOpgaveliste(); }
-    function sletOpgave(id) { if(confirm("Vil du slette denne opgave?")) { opgaver = opgaver.filter(o => o.id !== id); gemAltTilHukommelse(); bygOpgaveliste(); } }
+    function lukOpgaveModal() { 
+        document.getElementById('opgave-modal').style.display = 'none'; 
+        if(document.getElementById('side-kalender').style.display === 'block') {
+            bygKalenderUdsigt();
+        } else {
+            bygOpgaveliste(); 
+        }
+    }
+    
+    function sletOpgave(id) { 
+        if(confirm("Vil du slette denne opgave?")) { 
+            opgaver = opgaver.filter(o => o.id !== id); 
+            gemAltTilHukommelse(); 
+            if(document.getElementById('side-kalender').style.display === 'block') {
+                bygKalenderUdsigt();
+            } else {
+                bygOpgaveliste(); 
+            }
+        } 
+    }
     
     function haandterSmsNoteInput() {
         let o = opgaver.find(item => item.id === aktivOpgaveId);

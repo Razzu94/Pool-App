@@ -614,7 +614,6 @@
             let afstStr = (o._afstand !== null && o._afstand !== undefined) ? `📍 ${o._afstand.toFixed(1)} km` : `📍 -- km`;
             let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
             
-            // Tilføj frekvens-tekst på opgavekortet, hvis valgt
             let frqStr = "";
             if(o.frekvens === "7") frqStr = " • ⏱️ Hver uge";
             if(o.frekvens === "14") frqStr = " • ⏱️ Hver 2. uge";
@@ -891,7 +890,7 @@
         document.getElementById('opret-opg-titel').value = "";
         document.getElementById('opret-opg-fastpris-kroner').value = "";
         document.getElementById('opret-opg-lindet-antal').value = "1";
-        document.getElementById('opg-frekvens').value = "manuel"; // Defaulter til manuel gentagelse
+        document.getElementById('opg-frekvens').value = "manuel"; 
         haandterHusValgIOpgave(); visSide('side-opret-opgave');
     }
 
@@ -908,7 +907,7 @@
         
         document.getElementById('opret-opg-dato').value = o.dato;
         document.getElementById('opret-opg-note').value = o.note || "";
-        document.getElementById('opg-frekvens').value = o.frekvens || "manuel"; // Hent eksisterende frekvens
+        document.getElementById('opg-frekvens').value = o.frekvens || "manuel"; 
         
         haandterHusValgIOpgave();
         document.getElementById('opret-opg-type').value = o.type;
@@ -954,7 +953,6 @@
         document.getElementById('opret-adhoc-specifikke-felter').style.display = (t === "Ad-hoc") ? 'block' : 'none';
         document.getElementById('opret-lindet-specifikke-felter').style.display = (t === "Lindetpakker") ? 'block' : 'none';
         
-        // Skjul frekvens-valget for linnedpakke-udbringning, da det sjældent kører i faste intervaller her
         document.getElementById('opg-frekvens-ramme').style.display = (t === "Lindetpakker") ? 'none' : 'block';
         styreFastPrisFelt();
     }
@@ -970,7 +968,7 @@
         let d = document.getElementById('opret-opg-dato').value;
         let t = document.getElementById('opret-opg-type').value;
         let n = document.getElementById('opret-opg-note').value;
-        let frq = document.getElementById('opg-frekvens').value; // Hent valgte frekvens interval
+        let frq = document.getElementById('opg-frekvens').value; 
         
         let tStr = document.getElementById('opret-opg-titel').value.trim();
         let pForm = document.querySelector('input[name="adhoc-pris-type"]:checked')?.value || "time";
@@ -1328,7 +1326,6 @@
             };
         }
 
-        // OPDATER SIDSTE SERVICE-DATO PÅ HUSET I KARTOTEKET
         if(o.type !== "Lindetpakker") {
             let kartotekIndex = kartotek.findIndex(h => h.id === o.kartotekId);
             if(kartotekIndex !== -1) {
@@ -1336,7 +1333,6 @@
             }
         }
 
-        // GENERER AUTOMATISK NÆSTE GENTAGENDE OPGAVE (FREKVENS LÆST DIREKTE FRA OPGAVEN NU)
         if(o.frekvens && o.frekvens !== "manuel" && o.type !== "Lindetpakker") {
             let frekvensDage = parseInt(o.frekvens);
             let nuvaerendeDato = new Date(o.dato);
@@ -1358,7 +1354,7 @@
                     lindetAntal: 0,
                     startet: null,
                     omkostninger: [],
-                    frekvens: o.frekvens // Bevar det valgte interval til næste gang, så det kører i ring
+                    frekvens: o.frekvens 
                 });
             }
         }
@@ -1429,7 +1425,7 @@
             indhold += `<strong>🛠️ Internt notefelt / Rapport:</strong><br><span style="color:#60a5fa;">"${h.internRapport}"</span><hr style="border-color:#444;">`;
         }
         if(h.noteTilSms) {
-            indhold += `<strong>✉️ Note sendt til ejer:</strong><br><span style="color:#facc15;">"${h.noteTilSms}"</span><hr style="border-color:#444;">`;
+            indhold += `<strong>✉️ Note sendt to ejer:</strong><br><span style="color:#facc15;">"${h.noteTilSms}"</span><hr style="border-color:#444;">`;
         }
         
         indhold += `<strong>💰 Regning:</strong><br>• ${h.prisLabel}: ${h.basisPris} kr.<br>`;
@@ -1525,7 +1521,7 @@
                     </tbody>
                 </table>
                 <div style="margin-top: 40px; background: #f9fafb; padding: 15px; border-radius: 6px; font-size: 13px;">
-                    <strong>Bakmærkning:</strong> Beløbet is registreret som modtaget via MobilePay. Tak for handlen!
+                    <strong>Bemærkning:</strong> Beløbet er registreret som modtaget via MobilePay. Tak for handlen!
                 </div>
                 <div class="footer">Din Poolmand • Mobil: 28 68 88 98 • MobilePay: 28 68 88 98</div>
                 <script>window.onload = function() { window.print(); };<\/script>
@@ -1537,7 +1533,7 @@
     
     function aabenKortNavigation() {
         let adr = document.getElementById('m-adresse').innerText;
-        window.open(`http://maps.google.com/?q=${encodeURIComponent(adr)}`, '_blank');
+        window.open(`maps://maps.google.com/maps?daddr=${encodeURIComponent(adr)}&saddr=Current%20Location`, '_blank');
     }
 
     function beregnKemi() {
@@ -1645,7 +1641,7 @@
         if(o) { o.udfoertRapport = document.getElementById('m-adhoc-udfoert-tekst').value; gemAltTilHukommelse(); }
     }
     function haardNulstilApp() {
-        if(confirm("BEMÆRK: This sletter alt data i appen permanent! Er du sikker?")) {
+        if(confirm("BEMÆRK: Dette sletter alt data i appen permanent! Er du sikker?")) {
             localStorage.clear(); window.location.reload();
         }
     }

@@ -2,7 +2,7 @@
 <html lang="da">
 <head>
     <meta charset="UTF-8">
-    <title>Pool Service App v54 - Frekvens & 2-Aars Grænse</title>
+    <title>Pool Service App v55 - Frekvens på Opgave</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180' width='180' height='180'><rect width='180' height='180' fill='%23115d75'/><text x='50%25' y='55%25' font-family='Arial Black, sans-serif' font-weight='900' font-size='16' fill='%23ffffff' text-anchor='middle'>DIN POOLMAND</text><line x1='20' y1='115' x2='160' y2='115' stroke='%23ffffff' stroke-width='3'/></svg>">
@@ -207,6 +207,17 @@
             </div>
         </div>
 
+        <div id="opg-frekvens-ramme" class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-top:10px; margin-bottom:12px;">
+            <label style="color:#facc15; font-weight:bold; margin-bottom:5px;">📅 Frekvensinterval for denne opgave</label>
+            <select id="opg-frekvens">
+                <option value="manuel">Kun denne ene gang (Ingen gentagelse)</option>
+                <option value="7">Gentag hver uge (7 dage)</option>
+                <option value="14">Gentag hver 2. uge (14 dage)</option>
+                <option value="30">Gentag hver måned (30 dage)</option>
+            </select>
+            <small style="color:#9ca3af; font-size:11px; display:block; margin-top:4px;">Når opgaven afsluttes, planlægges der automatisk en ny opgave frem i tiden.</small>
+        </div>
+
         <div class="form-group"><label>Intern note til denne specifikke opgave</label><input id="opret-opg-note" type="text" placeholder="F.eks. Skal tages efter klokken 14:00"></div>
         <button onclick="gemNyOpgave()">Gem Opgave</button>
         <button onclick="visSide('side-opgaver')" class="btn-annuller">Annuller</button>
@@ -251,16 +262,7 @@
         <div class="form-group" id="felt-spa-liter" style="display:none;"><label>Spa størrelse (Liter)</label><input id="hus-spa" type="number" value="1500"></div>
 
         <div class="form-group" style="background:#222; padding:10px; border-radius:6px; border:1px solid #444; margin-top:10px;">
-            <label style="color:#facc15; font-weight:bold; margin-bottom:5px;">📅 Frekvens & Service-historik</label>
-            <div class="form-group">
-                <label>Frekvensinterval for besøg</label>
-                <select id="hus-frekvens">
-                    <option value="manuel">Kun manuel oprettelse (Ingen frekvens)</option>
-                    <option value="7">Hver uge (7 dage)</option>
-                    <option value="14">Hver 2. uge (14 dage)</option>
-                    <option value="30">Hver måned (30 dage)</option>
-                </select>
-            </div>
+            <label style="color:#60a5fa; font-weight:bold; margin-bottom:5px;">📅 Service-historik</label>
             <div class="form-group">
                 <label>Sidste udførte service-dato (Sættes automatisk ved afslutning)</label>
                 <input id="hus-sidste-service" type="date">
@@ -612,6 +614,12 @@
             let afstStr = (o._afstand !== null && o._afstand !== undefined) ? `📍 ${o._afstand.toFixed(1)} km` : `📍 -- km`;
             let noteText = o.note ? `<br><span class="note-visning">📝 ${o.note}</span>` : '';
             
+            // Tilføj frekvens-tekst på opgavekortet, hvis valgt
+            let frqStr = "";
+            if(o.frekvens === "7") frqStr = " • ⏱️ Hver uge";
+            if(o.frekvens === "14") frqStr = " • ⏱️ Hver 2. uge";
+            if(o.frekvens === "30") frqStr = " • ⏱️ Hver måned";
+
             let kantKlasse = "";
             if (o._uafsluttetFlyttet || o.dato < iDagStreng) {
                 kantKlasse = "opg-overskredet"; 
@@ -627,7 +635,7 @@
                     </div>
                     <span style="float:right; background:#374151; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; color:white; margin-right:55px;">${statusText}</span>
                     <strong>${adresseVisning}</strong><br>
-                    <span style="font-size:12px;color:#9ca3af;">📅 ${o.dato} • ${labelTypeStr} • ${afstStr}</span>
+                    <span style="font-size:12px;color:#9ca3af;">📅 ${o.dato} • ${labelTypeStr} • ${afstStr}${frqStr}</span>
                     ${noteText}
                 </div>`;
         });
@@ -762,12 +770,6 @@
         listeKopi.forEach(h => {
             let fListe = []; if(h.hasPool) fListe.push("Pool"); if(h.hasSpa) fListe.push("Spa");
             let fTekst = fListe.length > 0 ? fListe.join(" + ") : "Ingen faciliteter";
-            
-            // Interval label-tekst
-            let frqLabel = "Manuel";
-            if(h.frekvens === "7") frqLabel = "Hver uge";
-            if(h.frekvens === "14") frqLabel = "Hver 2. uge";
-            if(h.frekvens === "30") frqLabel = "Hver måned";
 
             b.innerHTML += `
                 <div class="card" onclick="redigerHus(${h.id})">
@@ -777,7 +779,7 @@
                     </div>
                     <strong>${h.adresse}</strong> • 👤 ${h.ejerNavn || '-'}<br>
                     <span style="font-size:12px;color:#9ca3af;">${h.postnr || ''} ${h.by || ''} (${fTekst})</span><br>
-                    <span style="font-size:11px;color:#facc15;">⏱️ Interval: ${frqLabel} ${h.sidsteService ? '• Sidste service: ' + h.sidsteService.split('-').reverse().join('.') : ''}</span>
+                    <span style="font-size:11px;color:#facc15;">📅 ${h.sidsteService ? 'Sidste service: ' + h.sidsteService.split('-').reverse().join('.') : 'Ingen registreret service endnu'}</span>
                 </div>`;
         });
     }
@@ -889,6 +891,7 @@
         document.getElementById('opret-opg-titel').value = "";
         document.getElementById('opret-opg-fastpris-kroner').value = "";
         document.getElementById('opret-opg-lindet-antal').value = "1";
+        document.getElementById('opg-frekvens').value = "manuel"; // Defaulter til manuel gentagelse
         haandterHusValgIOpgave(); visSide('side-opret-opgave');
     }
 
@@ -905,6 +908,7 @@
         
         document.getElementById('opret-opg-dato').value = o.dato;
         document.getElementById('opret-opg-note').value = o.note || "";
+        document.getElementById('opg-frekvens').value = o.frekvens || "manuel"; // Hent eksisterende frekvens
         
         haandterHusValgIOpgave();
         document.getElementById('opret-opg-type').value = o.type;
@@ -949,6 +953,9 @@
         let t = document.getElementById('opret-opg-type').value;
         document.getElementById('opret-adhoc-specifikke-felter').style.display = (t === "Ad-hoc") ? 'block' : 'none';
         document.getElementById('opret-lindet-specifikke-felter').style.display = (t === "Lindetpakker") ? 'block' : 'none';
+        
+        // Skjul frekvens-valget for linnedpakke-udbringning, da det sjældent kører i faste intervaller her
+        document.getElementById('opg-frekvens-ramme').style.display = (t === "Lindetpakker") ? 'none' : 'block';
         styreFastPrisFelt();
     }
     function styreFastPrisFelt() {
@@ -963,6 +970,7 @@
         let d = document.getElementById('opret-opg-dato').value;
         let t = document.getElementById('opret-opg-type').value;
         let n = document.getElementById('opret-opg-note').value;
+        let frq = document.getElementById('opg-frekvens').value; // Hent valgte frekvens interval
         
         let tStr = document.getElementById('opret-opg-titel').value.trim();
         let pForm = document.querySelector('input[name="adhoc-pris-type"]:checked')?.value || "time";
@@ -971,13 +979,11 @@
 
         if(t === "Ad-hoc" && !tStr) { alert("Angiv venligst en titel til ad-hoc opgaven."); return; }
 
-        // VALIDERING AF 2-ÅRS REGLEN VED OPRETTELSE
         let poolhus = kartotek.find(h => h.id === hId);
         if(poolhus && poolhus.sidsteService) {
             let valgtDato = new Date(d);
             let sidsteServiceDato = new Date(poolhus.sidsteService);
             
-            // Læg 2 år til sidste service
             let toAarSiden = new Date(sidsteServiceDato);
             toAarSiden.setFullYear(toAarSiden.getFullYear() + 2);
             
@@ -988,9 +994,9 @@
 
         if(idSkjult) {
             let o = opgaver.find(item => item.id == idSkjult);
-            if(o) { o.kartotekId = hId; o.dato = d; o.type = t; o.note = n; o.titel = tStr; o.prisForm = pForm; o.fastPris = fPris; o.lindetAntal = lAntal; }
+            if(o) { o.kartotekId = hId; o.dato = d; o.type = t; o.note = n; o.titel = tStr; o.prisForm = pForm; o.fastPris = fPris; o.lindetAntal = lAntal; o.frekvens = frq; }
         } else {
-            opgaver.push({ id: Date.now(), kartotekId: hId, dato: d, type: t, note: n, titel: tStr, prisForm: pForm, fastPris: fPris, lindetAntal: lAntal, startet: null, omkostninger: [] });
+            opgaver.push({ id: Date.now(), kartotekId: hId, dato: d, type: t, note: n, titel: tStr, prisForm: pForm, fastPris: fPris, lindetAntal: lAntal, startet: null, omkostninger: [], frekvens: frq });
         }
         gemAltTilHukommelse(); 
         
@@ -1016,8 +1022,6 @@
             note: document.getElementById('hus-note').value, hasPool: pB, hasSpa: sB,
             pool: parseFloat(document.getElementById('hus-pool').value) || 0,
             spa: parseFloat(document.getElementById('hus-spa').value) || 0,
-            // GEM NYE VÆRDIER
-            frekvens: document.getElementById('hus-frekvens').value,
             sidsteService: document.getElementById('hus-sidste-service').value
         };
 
@@ -1041,9 +1045,6 @@
         document.getElementById('hus-placering').value = ""; document.getElementById('hus-note').value = "";
         document.getElementById('hus-has-pool').checked = true; document.getElementById('hus-has-spa').checked = false;
         document.getElementById('hus-pool').value = "27"; document.getElementById('hus-spa').value = "1500";
-        
-        // Nulstil frekvensfelter
-        document.getElementById('hus-frekvens').value = "manuel";
         document.getElementById('hus-sidste-service').value = "";
 
         styreHusStaerrelseFelter(); visSide('side-opret-hus');
@@ -1064,9 +1065,6 @@
         document.getElementById('hus-placering').value = h.placering || ""; document.getElementById('hus-note').value = h.note || "";
         document.getElementById('hus-has-pool').checked = !!h.hasPool; document.getElementById('hus-has-spa').checked = !!h.hasSpa;
         document.getElementById('hus-pool').value = h.pool || 0; document.getElementById('hus-spa').value = h.spa || 0;
-        
-        // Indlæs frekvensværdier
-        document.getElementById('hus-frekvens').value = h.frekvens || "manuel";
         document.getElementById('hus-sidste-service').value = h.sidsteService || "";
 
         styreHusStaerrelseFelter(); visSide('side-opret-hus');
@@ -1106,7 +1104,6 @@
 
         let nRamme = document.getElementById('m-noter-ramme'); nRamme.innerHTML = "";
         
-        // VISNING AF 2-ÅRS ADVARSELS-NOTAT DIREKTE I POPUPPENS TOP
         if(hus.sidsteService) {
             let opgDato = new Date(o.dato);
             let serviceDato = new Date(hus.sidsteService);
@@ -1331,27 +1328,26 @@
             };
         }
 
-        // OPDATER SIDSTE SERVICE-DATO PÅ HUSET I KARTOTEKET (HVIS DET ER KONTROL-OPGAVE)
+        // OPDATER SIDSTE SERVICE-DATO PÅ HUSET I KARTOTEKET
         if(o.type !== "Lindetpakker") {
             let kartotekIndex = kartotek.findIndex(h => h.id === o.kartotekId);
             if(kartotekIndex !== -1) {
-                kartotek[kartotekIndex].sidsteService = o.dato; // Gemmer datoen fra den afsluttede opgave
+                kartotek[kartotekIndex].sidsteService = o.dato;
             }
         }
 
-        // GENERER AUTOMATISK NÆSTE FREKVENS-OPGAVE HVIS INTERVAl ER VALGT
-        if(hus.frekvens && hus.frekvens !== "manuel" && o.type !== "Lindetpakker") {
-            let frekvensDage = parseInt(hus.frekvens);
+        // GENERER AUTOMATISK NÆSTE GENTAGENDE OPGAVE (FREKVENS LÆST DIREKTE FRA OPGAVEN NU)
+        if(o.frekvens && o.frekvens !== "manuel" && o.type !== "Lindetpakker") {
+            let frekvensDage = parseInt(o.frekvens);
             let nuvaerendeDato = new Date(o.dato);
             nuvaerendeDato.setDate(nuvaerendeDato.getDate() + frekvensDage);
             let naesteDatoStreng = nuvaerendeDato.toISOString().split('T')[0];
             
-            // Tjek om der i forvejen ligger en opgave af samme type på den fremtidige dato for at undgå dubletter
             let dubletTjek = opgaver.some(eksisterende => eksisterende.kartotekId === o.kartotekId && eksisterende.dato === naesteDatoStreng && eksisterende.type === o.type);
             
             if(!dubletTjek) {
                 opgaver.push({
-                    id: Date.now() + 1, // Sikrer unikt ID
+                    id: Date.now() + 1,
                     kartotekId: o.kartotekId,
                     dato: naesteDatoStreng,
                     type: o.type,
@@ -1361,7 +1357,8 @@
                     fastPris: o.fastPris || 0,
                     lindetAntal: 0,
                     startet: null,
-                    omkostninger: []
+                    omkostninger: [],
+                    frekvens: o.frekvens // Bevar det valgte interval til næste gang, så det kører i ring
                 });
             }
         }
@@ -1573,7 +1570,7 @@
             kartotek: kartotek,
             opgaver: opgaver,
             historik: historik,
-            version: 54,
+            version: 55,
             eksporteretDato: new Date().toISOString()
         };
         
